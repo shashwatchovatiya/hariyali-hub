@@ -1,120 +1,107 @@
-const mongoose = require('mongoose');
-
+const { DataTypes } = require('sequelize');
 const bcryptjs = require('bcryptjs');
-
-const validator = require('validator');
-
 const jwt = require('jsonwebtoken');
 const { encryptMessage } = require('../../utils/cryptoUtil');
+const sequelize = require('../../config/database/db');
 
-
-const userSchema = new mongoose.Schema({
+const User = sequelize.define('user', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
     name: {
-        type: String,
-        required: [true, "Name is required"],
-        minlength: 3,
+        type: DataTypes.STRING(100),
+        allowNull: false
     },
     email: {
-        type: String,
-        required: [true, "Email address is required"],
-        unique: true, 
-        validate(email) {
-            if (!validator.isEmail(email)) {
-                throw new Error("Invalid Email");
-            }
-        }
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        unique: true
     },
     phone: {
-        type: String,
-        required: [true, "Phone number is required"],
-        unique: true,
-        validate(phone) {
-            if (!validator.isMobilePhone(phone, 'en-IN')) {
-                throw new Error("Invalid Phone");
-            }
-        }
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        unique: true
     },
     password: {
-        type: String,
-        required: [true, "Password is required"],
+        type: DataTypes.STRING(255),
+        allowNull: false
     },
     role: {
-        type: [String],
-        default: ["user"]
+        type: DataTypes.JSON,
+        defaultValue: ['user']
     },
     isUserVerified: {
-        type: Boolean,
-        default: false
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
     isTwoFactorAuthEnabled: {
-        type: Boolean,
-        default: false
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
-    avatar: {
-        public_id: {
-            type: String,
-        },
-        url: {
-            type: String,
-        }
+    avatar_public_id: {
+        type: DataTypes.STRING(500),
+        defaultValue: ''
     },
-    avatarList: [{
-        public_id: {
-            type: String,
-        },
-        url: {
-            type: String,
-        }
-    }],
+    avatar_url: {
+        type: DataTypes.STRING(1000),
+        defaultValue: ''
+    },
+    avatarList: {
+        type: DataTypes.JSON,
+        defaultValue: []
+    },
     gender: {
-        type: String,
-        required: [true, "Gender is required"],
+        type: DataTypes.STRING(20),
+        allowNull: false
     },
     age: {
-        type: Number,
-        required: [true, "Age is required"],
-        validate(age) {
-            if (!(age >= 18 && age <= 100)) {
-                throw new Error("Invalid Age");
+        type: DataTypes.INTEGER,
+        allowNull: false
+    }
+}, {
+    tableName: 'users',
+    timestamps: false,
+    hooks: {
+        beforeCreate: async (user) => {
+            if (user.password) {
+                const salt = await bcryptjs.genSalt(10);
+                user.password = await bcryptjs.hash(user.password, salt);
+            }
+        },
+        beforeUpdate: async (user) => {
+            if (user.changed('password')) {
+                const salt = await bcryptjs.genSalt(10);
+                user.password = await bcryptjs.hash(user.password, salt);
             }
         }
-    },
-    tokens: [{
-        token: {
-            type: String,
-            required: true
-        }
-    }]
+    }
 });
 
-// generating the JWT Tokens 
-userSchema.methods.generateAuthToken = async function () {
+User.prototype.generateAuthToken = async function () {
     try {
-        // generate the access token
-        const accessToken = jwt.sign({_id: this._id.toString()}, process.env.ACCESS_SECRET_KEY, { expiresIn: "1h" });
+        const accessToken = jwt.sign(
+            { _id: this.id.toString() },
+            process.env.ACCESS_SECRET_KEY,
+            { expiresIn: '1h' }
+        );
 
-        // generate the refresh token 
-        const refreshToken = jwt.sign({ _id: this._id.toString() }, process.env.REFRESH_SECRET_KEY, { expiresIn: "30d" });
-        this.tokens = this.tokens.concat({ token: refreshToken });
-        await this.save();
+        const refreshToken = jwt.sign(
+            { _id: this.id.toString() },
+            process.env.REFRESH_SECRET_KEY,
+            { expiresIn: '30d' }
+        );
 
-        return { refreshToken: encryptMessage(refreshToken), accessToken};
+        // Save refresh token to user_tokens table
+        const UserToken = require('./userToken');
+        await UserToken.create({ user_id: this.id, token: refreshToken });
+
+        return { refreshToken: encryptMessage(refreshToken), accessToken };
     } catch (err) {
         console.log(err);
+        throw err;
     }
-}
+};
 
-userSchema.pre("save", async function (next) {
-    if (this.isModified("password")) {
-        const salt = await bcryptjs.genSalt(10);
-        this.password = await bcryptjs.hash(this.password, salt);
-    }
-    next();
-})
-
-
-
-
-const user = new mongoose.model('user', userSchema);
-
-module.exports = user;
+module.exports = User;

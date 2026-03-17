@@ -1,5 +1,5 @@
 const validator = require("validator");
-const userModel = require('../../../model/userModel/user');
+const User = require('../../../model/userModel/user');
 const { validateStrongPassword } = require("../../../utils/validateStrongPassword");
 
 module.exports = async (req, res, next) => {
@@ -21,12 +21,12 @@ module.exports = async (req, res, next) => {
 
     if (!email) throw new Error("Email is required!");
     if (!validator.isEmail(email)) throw new Error("Email is not valid!");
-    const existingEmail = await userModel.findOne({ email }).select("email");
+    const existingEmail = await User.findOne({ where: { email }, attributes: ['email'] });
     if (existingEmail) throw new Error("Email already exists!");
 
     if (!phone) throw new Error("Phone number is required!");
     if (!validator.isMobilePhone(phone, "en-IN")) throw new Error("Phone number is invalid!");
-    const existingPhone = await userModel.findOne({ phone }).select("phone");
+    const existingPhone = await User.findOne({ where: { phone }, attributes: ['phone'] });
     if (existingPhone) throw new Error("Phone number already exists!");
 
     if (!age) throw new Error("Age is required!");

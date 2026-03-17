@@ -1,282 +1,289 @@
-const mongoose = require('mongoose');
-const nurseryStoresBlock = require('../../model/nurseryModel/nurseryStoreBlocks');
-const nurseryStoreTabs = require('../../model/nurseryModel/nurseryStoreTabs');
-const nurseryStoresTemplate = require('../../model/nurseryModel/nurseryStoreTemplates');
-const nursery = require('../../model/nurseryModel/nursery');
-const nurseryStoreContact = require('../../model/nurseryModel/nurseryStoreContact');
+const NurseryStoreBlock = require('../../model/nurseryModel/nurseryStoreBlocks');
+const NurseryStoreTab = require('../../model/nurseryModel/nurseryStoreTabs');
+const NurseryStoreTemplate = require('../../model/nurseryModel/nurseryStoreTemplates');
+const Nursery = require('../../model/nurseryModel/nursery');
+const NurseryStoreContact = require('../../model/nurseryModel/nurseryStoreContact');
 
+const toLegacyNursery = (nurseryInstance) => {
+    const nursery = nurseryInstance.toJSON ? nurseryInstance.toJSON() : nurseryInstance;
+
+    return {
+        _id: nursery.id,
+        nurseryName: nursery.nurseryName,
+        avatar: {
+            public_id: nursery.avatar_public_id || '',
+            url: nursery.avatar_url || ''
+        },
+        cover: {
+            public_id: nursery.cover_public_id || '',
+            url: nursery.cover_url || ''
+        },
+        nurseryEmail: nursery.nurseryEmail,
+        nurseryPhone: nursery.nurseryPhone,
+        address: nursery.address,
+        pinCode: nursery.pinCode,
+        city: nursery.city,
+        state: nursery.state
+    };
+};
+
+const toLegacyTab = (tabInstance) => {
+    const tab = tabInstance.toJSON ? tabInstance.toJSON() : tabInstance;
+
+    return {
+        _id: tab.id,
+        user: tab.user_id,
+        nursery: tab.nursery_id,
+        tabName: tab.tabName,
+        status: tab.status,
+        index: tab.index
+    };
+};
+
+const toLegacyTemplate = (templateInstance) => {
+    const template = templateInstance.toJSON ? templateInstance.toJSON() : templateInstance;
+
+    return {
+        _id: template.id,
+        user: template.user_id,
+        nursery: template.nursery_id,
+        nurseryStoreTabs: template.nurseryStoreTabs_id,
+        index: template.index,
+        templateName: template.templateName
+    };
+};
+
+const toLegacyBlock = (blockInstance) => {
+    const block = blockInstance.toJSON ? blockInstance.toJSON() : blockInstance;
+
+    return {
+        _id: block.id,
+        user: block.user_id,
+        nursery: block.nursery_id,
+        nurseryStoreTabs: block.nurseryStoreTabs_id,
+        nurseryStoreTemplate: block.nurseryStoreTemplates_id,
+        index: block.index,
+        image: {
+            public_id: block.image_public_id,
+            url: block.image_url
+        },
+        isProduct: block.isProduct,
+        url: block.url,
+        title: block.title
+    };
+};
+
+const toLegacyContact = (contactInstance) => {
+    const contact = contactInstance.toJSON ? contactInstance.toJSON() : contactInstance;
+
+    return {
+        _id: contact.id,
+        nursery: contact.nursery_id,
+        user: contact.user_id,
+        name: contact.name,
+        email: contact.email,
+        message: contact.message,
+        isMessageViewed: contact.isMessageViewed,
+        createdAt: contact.createdAt
+    };
+};
 
 exports.getNurseryDetail = async function (req, res, next) {
     try {
         const id = req.params.id;
 
-        //! Checking for the the correct route 
         if (!id) {
-            const error = new Error("Incorrect Routes: Nursery Public Store Id is required");
+            const error = new Error('Incorrect Routes: Nursery Public Store Id is required');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Getting the data from the database
-        const nurseryDetails = await nursery.findById(id).select("-user -nurseryOwnerName -avatarList -coverList");
+        const nurseryDetails = await Nursery.findByPk(id);
 
-        //! Data Not found
         if (!nurseryDetails) {
-            const error = new Error("No Data Found");
+            const error = new Error('No Data Found');
             error.statusCode = 404;
             throw error;
         }
 
-
-        //* Preparing Response Object 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Nursery Store Detail",
-            result: nurseryDetails
-        }
-
-        //* Sending Response 
-        res.status(200).send(info);
-
+            message: 'Nursery Store Detail',
+            result: toLegacyNursery(nurseryDetails)
+        });
 
     } catch (error) {
-        //! Sending Error Response to Middleware
         next(error);
     }
-}
+};
 
 exports.getAllTabsNurseryStorePublicView = async function (req, res, next) {
     try {
         const id = req.params.id;
 
-        //! Checking for the the correct route 
         if (!id) {
-            const error = new Error("Incorrect Routes: Nursery Public Store Id is required");
+            const error = new Error('Incorrect Routes: Nursery Public Store Id is required');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Getting the data from the database
-        const nurseryTabs = await nurseryStoreTabs.find({ nursery: id, status: 'publish' }).select("-user");
+        const nurseryTabs = await NurseryStoreTab.findAll({ where: { nursery_id: id, status: 'publish' } });
 
-        //! Data Not found
-        if (!nurseryTabs) {
-            const error = new Error("No Data Found");
-            error.statusCode = 404;
-            throw error;
-        }
-
-
-        //* Preparing Response Object 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Nursery Store Tab Data",
-            result: nurseryTabs
-        };
-
-        //* Sending Response 
-        res.status(200).send(info);
-
+            message: 'Nursery Store Tab Data',
+            result: nurseryTabs.map(toLegacyTab)
+        });
 
     } catch (error) {
-        //! Sending Error Response to Middleware
         next(error);
     }
-}
+};
 
 exports.getAllTemplatesNurseryStorePublicView = async function (req, res, next) {
     try {
-        const {nurseryId, tabId} = req.params;
+        const { nurseryId, tabId } = req.params;
 
-        //! Checking for the the correct route 
         if (!nurseryId) {
-            const error = new Error("Incorrect Routes: Nursery Public Store Id is required");
+            const error = new Error('Incorrect Routes: Nursery Public Store Id is required');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Getting the data from the database
-        const nurseryTabs = await nurseryStoreTabs.findOne({ _id: tabId, nursery: nurseryId, status: 'publish' }).select("status");
+        const nurseryTab = await NurseryStoreTab.findOne({
+            where: { id: tabId, nursery_id: nurseryId, status: 'publish' }
+        });
 
-        //! Data Not found
-        if (!nurseryTabs || !nurseryTabs.status || nurseryTabs.status !== 'publish') {
-            const error = new Error("No Data Found");
+        if (!nurseryTab || nurseryTab.status !== 'publish') {
+            const error = new Error('No Data Found');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Getting the data from the database
-        const nurseryTemplate = await nurseryStoresTemplate.find({ nursery: nurseryId }).select("-user");
+        const nurseryTemplates = await NurseryStoreTemplate.findAll({ where: { nursery_id: nurseryId } });
 
-        //! Data Not found
-        if (!nurseryTemplate) {
-            const error = new Error("No Data Found");
-            error.statusCode = 404;
-            throw error;
-        }
-
-        //* Preparing Response Object 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Nursery Store Template Data",
-            result: nurseryTemplate
-        };
-
-        //* Sending Response 
-        res.status(200).send(info);
-
+            message: 'Nursery Store Template Data',
+            result: nurseryTemplates.map(toLegacyTemplate)
+        });
 
     } catch (error) {
-        //! Sending Error Response to Middleware
         next(error);
     }
-}
+};
 
 exports.getAllBlocksNurseryStorePublicView = async function (req, res, next) {
     try {
-        const {nurseryId, tabId} = req.params;
+        const { nurseryId, tabId } = req.params;
 
-        //! Checking for the the correct route 
         if (!nurseryId) {
-            const error = new Error("Incorrect Routes: Nursery Public Store Id is required");
+            const error = new Error('Incorrect Routes: Nursery Public Store Id is required');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Getting the data from the database
-        const nurseryTabs = await nurseryStoreTabs.findOne({ _id: tabId, nursery: nurseryId, status: 'publish' }).select("status");
+        const nurseryTab = await NurseryStoreTab.findOne({
+            where: { id: tabId, nursery_id: nurseryId, status: 'publish' }
+        });
 
-        //! Data Not found
-        if (!nurseryTabs || !nurseryTabs.status || nurseryTabs.status !== 'publish') {
-            const error = new Error("No Data Found");
+        if (!nurseryTab || nurseryTab.status !== 'publish') {
+            const error = new Error('No Data Found');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Getting the data from the database
-        const nurseryTemplate = await nurseryStoresBlock.find({ nursery: nurseryId }).select("-user");
+        const nurseryBlocks = await NurseryStoreBlock.findAll({ where: { nursery_id: nurseryId } });
 
-        //! Data Not found
-        if (!nurseryTemplate) {
-            const error = new Error("No Data Found");
-            error.statusCode = 404;
-            throw error;
-        }
-
-        //* Preparing Response Object 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Nursery Store Blocks Data",
-            result: nurseryTemplate
-        };
-
-        //* Sending Response 
-        res.status(200).send(info);
-
+            message: 'Nursery Store Blocks Data',
+            result: nurseryBlocks.map(toLegacyBlock)
+        });
 
     } catch (error) {
-        //! Sending Error Response to Middleware
         next(error);
     }
-}
+};
 
 exports.nurseryStoreContactUs = async function (req, res, next) {
     try {
         const id = req.params.id;
-
         const { name, email, message, user } = req.body;
 
-        //! Checking for the the correct route 
         if (!id) {
-            const error = new Error("Incorrect Routes: Nursery Public Store Id is required");
+            const error = new Error('Incorrect Routes: Nursery Public Store Id is required');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Inserting the contact us data into database
-        const nurseryStoreContactUs = new nurseryStoreContact({ name, email, message, user, nursery: id });
-        await nurseryStoreContactUs.save();
+        await NurseryStoreContact.create({
+            name,
+            email,
+            message,
+            user_id: user || null,
+            nursery_id: id
+        });
 
-        //* Preparing Response Object 
-        const info = {
+        res.status(201).send({
             status: true,
-            message: "Thank you for contacting nursery",
-        };
-
-        //* Sending Response 
-        res.status(201).send(info);
+            message: 'Thank you for contacting nursery'
+        });
 
     } catch (error) {
-        //! Sending Error Response to Middleware
         next(error);
     }
-}
+};
 
 exports.getNurseryStoreMessage = async function (req, res, next) {
     try {
         const id = req.params.id;
 
-        //! Checking for the the correct route 
         if (!id) {
-            const error = new Error("Incorrect Routes: Nursery Public Store Id is required");
+            const error = new Error('Incorrect Routes: Nursery Public Store Id is required');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Inserting the contact us data into database
-        const nurseryStoreContactUs = await nurseryStoreContact.find({ nursery: id });
+        const nurseryStoreContactUs = await NurseryStoreContact.findAll({ where: { nursery_id: id } });
 
-        //* Preparing Response Object 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Getting Nursery Store Message",
-            nurseryMessage: nurseryStoreContactUs
-        };
-
-        //* Sending Response 
-        res.status(200).send(info);
+            message: 'Getting Nursery Store Message',
+            nurseryMessage: nurseryStoreContactUs.map(toLegacyContact)
+        });
 
     } catch (error) {
-        //! Sending Error Response to Middleware
         next(error);
     }
-}
+};
 
 exports.NurseryStoreMessageMarkAsViewed = async function (req, res, next) {
     try {
         const id = req.params.nurseryId;
-        const _id = req.params.messageId;
+        const messageId = req.params.messageId;
 
-        //! Checking for the the correct route 
         if (!id) {
-            const error = new Error("Incorrect Routes: Nursery Public Store Id is required");
+            const error = new Error('Incorrect Routes: Nursery Public Store Id is required');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Inserting the contact us data into database
-        const nurseryMessage = await nurseryStoreContact.findOneAndUpdate({
-                nursery: id, _id 
-            },{
-                 $set: { 
-                    isMessageViewed: true 
-                 },
-            }, {
-                new: true
-            });
+        await NurseryStoreContact.update({ isMessageViewed: true }, {
+            where: { nursery_id: id, id: messageId }
+        });
 
-    //* Preparing Response Object 
-    const info = {
-        status: true,
-        message: "Getting Nursery Store Message",
-        nurseryMessage
-    };
+        const nurseryMessage = await NurseryStoreContact.findOne({
+            where: { nursery_id: id, id: messageId }
+        });
 
-    //* Sending Response 
-    res.status(200).send(info);
+        res.status(200).send({
+            status: true,
+            message: 'Getting Nursery Store Message',
+            nurseryMessage: toLegacyContact(nurseryMessage)
+        });
 
-} catch (error) {
-    //! Sending Error Response to Middleware
-    next(error);
-}
-}
+    } catch (error) {
+        next(error);
+    }
+};

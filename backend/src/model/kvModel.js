@@ -1,33 +1,39 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database/db');
 
-const kvSchema = new mongoose.Schema({
+const KV = sequelize.define('kv', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
     userId: {
-        type: String,
-        required: true
+        type: DataTypes.STRING(255),
+        allowNull: false
     },
     token: {
-        type: String,
-        required: true
+        type: DataTypes.STRING(500),
+        allowNull: false
     },
     key: {
-        type: String,
-        required: true
+        type: DataTypes.STRING(255),
+        allowNull: false
     },
     data: {
-        type: mongoose.Schema.Types.Mixed,
-        required: true
+        type: DataTypes.JSON,
+        allowNull: false
     },
     expireAt: {
-        type: Date,
-        required: true,
-        index: { expires: 0 }
+        type: DataTypes.DATE,
+        allowNull: false
     }
-}, { timestamps: true });
-
-// Index for quick lookups
-kvSchema.index({ userId: 1, token: 1, key: 1 });
-
-
-const KV = mongoose.model('KV', kvSchema);
+}, {
+    tableName: 'kv_store',
+    timestamps: true,
+    indexes: [
+        { fields: ['userId', 'token', 'key'], unique: true },
+        { fields: ['expireAt'] }
+    ]
+});
 
 module.exports = KV;

@@ -1,173 +1,86 @@
-const mongoose = require('mongoose');
-const validator = require('validator');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database/db');
 
-const orderSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.ObjectId,
-        ref: "user",
-        required: [true, "User Id is required."],
-        immutable: true
+// Order master table
+const Order = sequelize.define('order', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
     },
-    orderItems: [
-        {
-            plant: {
-                type: mongoose.Schema.ObjectId,
-                ref: "plant",
-                required: [true, "Plant Id is required."],
-                immutable: true
-            },
-            nursery: {
-                type: mongoose.Schema.ObjectId,
-                ref: "nursery",
-                required: [true, "Nursery Id is required."],
-                immutable: true
-            },
-            nurseryName: {
-                type: String,
-                required: [true, "Nursery Name is required."],
-            },
-            plantName: {
-                type: String,
-                required: [true, "Plant Name is required."]
-            },
-            images: {
-                public_id: {
-                    type: String,
-                    required: [true, "Image public id is required."]
-                },
-                url: {
-                    type: String,
-                    required: [true, "Image public url is required."]
-                },
-            },
-            price: {
-                type: Number,
-                required: [true, "Price is required."],
-                validator(value) {
-                    if (value < 0) {
-                        throw new Error("Price should not be negative");
-                    }
-                }
-            },
-            discount: {
-                type: Number,
-                required: [true, "Discount is required."],
-                validator(value) {
-                    if (value < 0 && value > 100) {
-                        throw new Error("Discount must be greater then 0 and smaller then 100");
-                    }
-                }
-            },
-            quantity: {
-                type: Number,
-                required: [true, "Quantity is required."],
-            },
-            orderStatus: {
-                status: String,
-                message: String,
-                statusAt: {
-                    type: Date,
-                    default: Date.now
-                }
-            },
-        }
-    ],
-    shippingInfo: {
-        name: {
-            type: String,
-            required: [true, "Person Name in address is required"]
-        },
-        phone: {
-            type: String,
-            required: [true, "Phone number is required"],
-            validate(phone) {
-                if (!validator.isMobilePhone(phone, 'en-IN')) {
-                    throw new Error("Invalid Phone");
-                }
-            }
-        },
-        pinCode: {
-            type: String,
-            required: [true, "Pin Code is required"],
-            validate(pinCode) {
-                if (!validator.isPostalCode(pinCode, 'IN')) {
-                    throw new Error("Invalid Pin Code");
-                }
-            }
-        },
-        address: {
-            type: String,
-            required: [true, "Address Filed is required"]
-        },
-        landmark: {
-            type: String,
-        },
-        city: {
-            type: String,
-            required: [true, "City is required"]
-        },
-        state: {
-            type: String,
-            required: [true, "State is required"]
-        },
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
-    pricing: {
-        totalPriceWithoutDiscount: {
-            type: Number,
-            required: [true, "totalPriceWithoutDiscount price is required."],
-        },
-        actualPriceAfterDiscount: {
-            type: Number,
-            required: [true, "totalPriceWithoutDiscount price is required."],
-        },
-        discountPrice: {
-            type: Number,
-            required: [true, "discountPrice price is required."],
-        },
-        deliveryPrice: {
-            type: Number,
-            required: [true, "Delivery price is required."],
-        },
-        totalPrice: {
-            type: Number,
-            required: [true, "Total Price is required."]
-        },
-    },
+    // Shipping Info
+    shipping_name: { type: DataTypes.STRING(100), allowNull: false },
+    shipping_phone: { type: DataTypes.STRING(20), allowNull: false },
+    shipping_pinCode: { type: DataTypes.STRING(10), allowNull: false },
+    shipping_address: { type: DataTypes.TEXT, allowNull: false },
+    shipping_landmark: { type: DataTypes.STRING(255), defaultValue: '' },
+    shipping_city: { type: DataTypes.STRING(100), allowNull: false },
+    shipping_state: { type: DataTypes.STRING(100), allowNull: false },
+    // Pricing
+    totalPriceWithoutDiscount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    actualPriceAfterDiscount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    discountPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    deliveryPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    totalPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    // Order metadata
     orderAt: {
-        type: Date,
-        default: Date.now,
-        required: true,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
     },
-    payment: {
-        paymentId: {
-            type: String,
-            required: true,
-            unique: true
-        },
-        status: {
-            type: String,
-            required: true,
-            default: "pending"
-        },
-        message: {
-            type: String,
-            default: "Waiting for payment confirmation!"
-        },
-        paymentMethods: {
-            type: String,
-            required: true,
-        }
-    },
-    delivery: {
-        delivery: {
-            type: mongoose.Schema.ObjectId,
-            ref: "delivery",
-        },
-        deliveryPersonName: String,
-        deliveredAt: Date,
-    },
+    // Payment
+    paymentId: { type: DataTypes.STRING(255), allowNull: false, unique: true },
+    paymentStatus: { type: DataTypes.STRING(50), defaultValue: 'pending' },
+    paymentMessage: { type: DataTypes.STRING(500), defaultValue: 'Waiting for payment confirmation!' },
+    paymentMethods: { type: DataTypes.STRING(100), allowNull: false },
+    // Delivery
+    delivery_id: { type: DataTypes.INTEGER, allowNull: true },
+    deliveryPersonName: { type: DataTypes.STRING(100), allowNull: true },
+    deliveredAt: { type: DataTypes.DATE, allowNull: true }
+}, {
+    tableName: 'orders',
+    timestamps: false
 });
 
-const orders = new mongoose.model('orders', orderSchema);
+// Order Items table
+const OrderItem = sequelize.define('order_item', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
+    order_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    plant_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    nursery_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    nurseryName: { type: DataTypes.STRING(200), allowNull: false },
+    plantName: { type: DataTypes.STRING(200), allowNull: false },
+    image_public_id: { type: DataTypes.STRING(500), allowNull: false },
+    image_url: { type: DataTypes.STRING(1000), allowNull: false },
+    price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    discount: { type: DataTypes.DECIMAL(5, 2), allowNull: false },
+    quantity: { type: DataTypes.INTEGER, allowNull: false },
+    orderStatus: { type: DataTypes.STRING(50), defaultValue: 'pending' },
+    orderStatusMessage: { type: DataTypes.STRING(500), defaultValue: '' },
+    statusAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+    tableName: 'order_items',
+    timestamps: false
+});
 
-module.exports = orders;
+// Association
+Order.hasMany(OrderItem, { foreignKey: 'order_id', as: 'orderItems' });
+OrderItem.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+
+module.exports = { Order, OrderItem };

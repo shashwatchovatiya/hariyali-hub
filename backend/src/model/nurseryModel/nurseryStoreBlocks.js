@@ -1,58 +1,21 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database/db');
 
-const nurseryStoreBlockSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.ObjectId,
-        ref: "user",
-        required: [true, "User Id is required."],
-        immutable: true
-    },
-    nursery: {
-        type: mongoose.Schema.ObjectId,
-        ref: "nursery",
-        required: [true, "Nursery Id is required."],
-        immutable: true
-    },
-    nurseryStoreTabs: { 
-        type: mongoose.Schema.ObjectId,
-        ref: "nurseryStoreTab",
-        required: [true, "Nursery Store Tab Id is required."],
-        immutable: true
-    },
-    nurseryStoreTemplates: { 
-        type: mongoose.Schema.ObjectId,
-        ref: "nurseryStoresTemplate",
-        required: [true, "Nursery Store Template Id is required."],
-        immutable: true
-    },
-    index: {
-        type: Number,
-        required: [true, "Index is required."],
-    },
-    image: {
-        public_id: {
-            type: String,
-            required: [true, "Image public id is required."]
-        },
-        url: {
-            type: String,
-            required: [true, "Image public url is required."]
-        },
-    },
-    isProduct: {
-        type: Boolean,
-        default: false
-    },
-    url: {
-        type: String,
-        required: [true, "Url is required."],
-    },
-    title: {
-        type: String,
-        required: [true, "Title is required."],
-    }
+const NurseryStoreBlock = sequelize.define('nursery_store_block', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    user_id: { type: DataTypes.INTEGER, allowNull: false },
+    nursery_id: { type: DataTypes.INTEGER, allowNull: false },
+    nurseryStoreTabs_id: { type: DataTypes.INTEGER, allowNull: false },
+    nurseryStoreTemplates_id: { type: DataTypes.INTEGER, allowNull: false },
+    index: { type: DataTypes.INTEGER, allowNull: false },
+    image_public_id: { type: DataTypes.STRING(500), allowNull: false },
+    image_url: { type: DataTypes.STRING(1000), allowNull: false },
+    isProduct: { type: DataTypes.BOOLEAN, defaultValue: false },
+    url: { type: DataTypes.STRING(2000), allowNull: false },
+    title: { type: DataTypes.STRING(500), allowNull: false }
+}, {
+    tableName: 'nursery_store_blocks',
+    timestamps: false
 });
 
-const nurseryStoresBlock = new mongoose.model('nurseryStoresBlock', nurseryStoreBlockSchema);
-
-module.exports = nurseryStoresBlock;
+module.exports = NurseryStoreBlock;

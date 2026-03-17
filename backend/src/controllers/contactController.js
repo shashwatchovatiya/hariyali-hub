@@ -12,9 +12,7 @@ const GetInTouch = async (req, res, next) => {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
-        // // Save the data to the database
-        const newContact = new Contact({ name, email, message });
-        await newContact.save();
+        await Contact.create({ name, email, message });
 
         const isEmailSent = await getInTouch(email, name, message);
 

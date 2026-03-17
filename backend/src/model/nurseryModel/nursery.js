@@ -1,99 +1,78 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database/db');
 
-const validator = require('validator');
-
-const nurserySchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.ObjectId,
-        ref: "user",
-        required: [true, "User Id is required."],
-        unique: [true, "You are already Plant Seller."],
-        immutable: true
+const Nursery = sequelize.define('nursery', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        unique: true
     },
     nurseryOwnerName: {
-        type: String,
-        required: [true, "Owner Name is required."],
-        minlength: 3,
+        type: DataTypes.STRING(100),
+        allowNull: false
     },
     nurseryName: {
-        type: String,
-        required: [true, "Nursery Name is required."],
-        minlength: 3,
+        type: DataTypes.STRING(200),
+        allowNull: false
     },
-    avatar: {
-        public_id: {
-            type: String,
-            default: ""
-        },
-        url: {
-            type: String,
-            default: ""
-        }
+    avatar_public_id: {
+        type: DataTypes.STRING(500),
+        defaultValue: ''
     },
-    avatarList: [{
-        public_id: {
-            type: String,
-        },
-        url: {
-            type: String,
-        }
-    }],
-    cover: {
-        public_id: {
-            type: String,
-            default: ""
-        },
-        url: {
-            type: String,
-            default: ""
-        }
+    avatar_url: {
+        type: DataTypes.STRING(1000),
+        defaultValue: ''
     },
-    coverList: [{
-        public_id: {
-            type: String,
-        },
-        url: {
-            type: String,
-        }
-    }],
+    avatarList: {
+        type: DataTypes.JSON,
+        defaultValue: []
+    },
+    cover_public_id: {
+        type: DataTypes.STRING(500),
+        defaultValue: ''
+    },
+    cover_url: {
+        type: DataTypes.STRING(1000),
+        defaultValue: ''
+    },
+    coverList: {
+        type: DataTypes.JSON,
+        defaultValue: []
+    },
     nurseryEmail: {
-        type: String,
-        required: [true, "Nursery Email is required."],
-        unique: [true, "This email is already in used."],
-        validate(email) {
-            if (!validator.isEmail(email)) {
-                throw new Error("Invalid Email.");
-            }
-        }
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        unique: true
     },
     nurseryPhone: {
-        type: String,
-        required: [true, "Nursery Phone is required."],
-        unique: [true, "This phone is already in used."],
-        validate(phone) {
-            if (!validator.isMobilePhone(phone, 'en-IN')) {
-                throw new Error("Invalid Phone.");
-            }
-        }
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        unique: true
     },
     address: {
-        type: String,
-        required: [true, "Address is required."],
+        type: DataTypes.TEXT,
+        allowNull: false
     },
     pinCode: {
-        type: Number,
-        required: [true, "Pin Code is required."],
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
     city: {
-        type: String,
-        required: [true, "City is required."],
+        type: DataTypes.STRING(100),
+        allowNull: false
     },
     state: {
-        type: String,
-        required: [true, "State is required."],
+        type: DataTypes.STRING(100),
+        allowNull: false
     }
+}, {
+    tableName: 'nurseries',
+    timestamps: false
 });
 
-const nursery = new mongoose.model('nursery', nurserySchema);
-
-module.exports = nursery;
+module.exports = Nursery;

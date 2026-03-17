@@ -1,51 +1,67 @@
-const { default: mongoose } = require('mongoose');
 const { deleteResourcesByPrefix, deleteFolder, uploadImage } = require('../../utils/uploadImages');
 const bcryptjs = require('bcryptjs');
 
-const userModel = require('../../model/userModel/user');
-const nurseryStoreTabs = require('../../model/nurseryModel/nurseryStoreTabs');
-const nurseryStoreTemplates = require('../../model/nurseryModel/nurseryStoreTemplates');
-const nurseryStoreBlocks = require('../../model/nurseryModel/nurseryStoreBlocks');
-const plantModel = require('../../model/nurseryModel/plants');
-const nurseryModel = require('../../model/nurseryModel/nursery');
-const addressModel = require('../../model/userModel/address');
-const cartModel = require('../../model/checkoutModel/cart');
+const User = require('../../model/userModel/user');
+const NurseryStoreTabs = require('../../model/nurseryModel/nurseryStoreTabs');
+const NurseryStoreTemplates = require('../../model/nurseryModel/nurseryStoreTemplates');
+const NurseryStoreBlocks = require('../../model/nurseryModel/nurseryStoreBlocks');
+const Plant = require('../../model/nurseryModel/plants');
+const Nursery = require('../../model/nurseryModel/nursery');
+const Address = require('../../model/userModel/address');
+const Cart = require('../../model/checkoutModel/cart');
 const { getData, deleteData } = require('../../utils/redisVercelKv');
-const orderModel = require('../../model/checkoutModel/orders');
-const nurseryStoreContact = require('../../model/nurseryModel/nurseryStoreContact');
+const { Order } = require('../../model/checkoutModel/orders');
+const NurseryStoreContact = require('../../model/nurseryModel/nurseryStoreContact');
 
+const toLegacyUser = (userInstance) => {
+    if (!userInstance) return null;
+    const user = userInstance.toJSON ? userInstance.toJSON() : userInstance;
+
+    return {
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isUserVerified: user.isUserVerified,
+        isTwoFactorAuthEnabled: user.isTwoFactorAuthEnabled,
+        avatar: {
+            public_id: user.avatar_public_id || '',
+            url: user.avatar_url || ''
+        },
+        avatarList: user.avatarList || [],
+        gender: user.gender,
+        age: user.age
+    };
+};
 
 exports.getUserProfile = async (req, res, next) => {
     try {
-        const result = await userModel.findOne({ _id: req.user }).select({ password: 0, tokens: 0, __v: 0 });
+        const result = await User.findByPk(req.user);
 
-        //! If the user does not exist
         if (!result) {
-            const error = new Error("Authentication Failed");
+            const error = new Error('Authentication Failed');
             error.statusCode = 403;
             throw error;
         }
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "User Data",
-            result
-        }
-
-        res.status(200).send(info);
+            message: 'User Data',
+            result: toLegacyUser(result)
+        });
 
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
 };
 
 exports.updateUserProfile = async (req, res, next) => {
     try {
-
         const { _id, name, phone, gender, age } = req.body;
 
-        if (_id.toString() !== req.user.toString()) {
-            const error = new Error("Authentication Failed");
+        if (_id?.toString() !== req.user.toString()) {
+            const error = new Error('Authentication Failed');
             error.statusCode = 403;
             throw error;
         }
@@ -56,28 +72,23 @@ exports.updateUserProfile = async (req, res, next) => {
         if (gender !== null && gender !== undefined) updates.gender = gender;
         if (age !== null && age !== undefined) updates.age = age;
 
-        const result = await userModel.findOneAndUpdate({ _id: req.user }, {
-            $set: updates
-        }, {
-            new: true
-        }).select({ password: 0, tokens: 0, __v: 0 });
+        await User.update(updates, { where: { id: req.user } });
+        const result = await User.findByPk(req.user);
 
         if (!result) {
-            const error = new Error("User not found");
+            const error = new Error('User not found');
             error.statusCode = 404;
             throw error;
         }
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "User profile updated successfully",
-            result
-        }
-
-        res.status(200).send(info);
+            message: 'User profile updated successfully',
+            result: toLegacyUser(result)
+        });
 
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
 };
 
@@ -85,316 +96,261 @@ exports.deleteUserProfile = async (req, res, next) => {
     try {
         const userId = req.user;
 
-        const deletedUser = await userModel.findOneAndDelete({ _id: userId });
+        const deletedUser = await User.findByPk(userId);
 
         if (!deletedUser) {
-            const error = new Error("User not found");
+            const error = new Error('User not found');
             error.statusCode = 404;
             throw error;
         }
 
-        //? Delete the information related to the user....
-        await addressModel.deleteMany({ user: req.user });
-        await cartModel.deleteMany({ user: req.user });
-        await orderModel.deleteMany({ user: req.user });
-        await nurseryStoreContact.deleteMany({ user: req.user });
+        await deletedUser.destroy();
+
+        await Address.destroy({ where: { user_id: req.user } });
+        await Cart.destroy({ where: { user_id: req.user } });
+        await Order.destroy({ where: { user_id: req.user } });
+        await NurseryStoreContact.destroy({ where: { user_id: req.user } });
 
         if (req.nursery) {
-            await nurseryModel.findOneAndDelete({ _id: req.nursery, user: req.user });
-            await nurseryStoreTabs.deleteMany({ user: req.user, nursery: req.nursery });
-            await nurseryStoreTemplates.deleteMany({ user: req.user, nursery: req.nursery });
-            await nurseryStoreBlocks.deleteMany({ user: req.user, nursery: req.nursery });
-            await nurseryStoreContact.deleteMany({ nursery: req.nursery });
-            await plantModel.deleteMany({ user: req.user, nursery: req.nursery });
-
-            //TODO: delete the implementations of deleting the order data, review, save for latter, wishList and all if needed.
+            await Nursery.destroy({ where: { id: req.nursery, user_id: req.user } });
+            await NurseryStoreTabs.destroy({ where: { user_id: req.user, nursery_id: req.nursery } });
+            await NurseryStoreTemplates.destroy({ where: { user_id: req.user, nursery_id: req.nursery } });
+            await NurseryStoreBlocks.destroy({ where: { user_id: req.user, nursery_id: req.nursery } });
+            await NurseryStoreContact.destroy({ where: { nursery_id: req.nursery } });
+            await Plant.destroy({ where: { user_id: req.user, nursery_id: req.nursery } });
 
             await deleteResourcesByPrefix(`PlantSeller/user/${req.user}`, {
                 type: 'upload',
                 resource_type: 'image',
                 invalidate: true
-            })
+            });
 
             await deleteFolder(`PlantSeller/user/${req.user}`);
         }
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "User profile deleted successfully",
-        };
-
-        res.status(200).send(info);
+            message: 'User profile deleted successfully'
+        });
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
 };
-
 
 exports.validateVerificationToken = async (req, res, next) => {
     const { token } = req.params;
 
     try {
-        //! Token does not exist
         if (!token) {
-            const error = new Error("Invalid Token Parameters");
+            const error = new Error('Invalid Token Parameters');
             error.statusCode = 404;
             throw error;
         }
 
-        //^ Get data form the redis database
         const userData = await getData('root', token, 'verifyUser');
 
-        //! User does not exist in the redis db or the user token got expired after few minutes 
         if (!userData) {
-            const error = new Error("Token Expired or does not exist");
+            const error = new Error('Token Expired or does not exist');
             error.statusCode = 404;
             throw error;
         }
 
-        const user = await userModel.findById(userData.userId);
+        const user = await User.findByPk(userData.userId);
 
-        //! User does not exist in the actual database
         if (!user) {
-            const error = new Error("Token Expired or does not exist");
+            const error = new Error('Token Expired or does not exist');
             error.statusCode = 405;
             throw error;
         }
 
-
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Token is valid",
-        }
-
-        res.status(200).send(info);
-
+            message: 'Token is valid'
+        });
 
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
-}
+};
 
 exports.validatePasswordRestToken = async (req, res, next) => {
     const { token } = req.params;
 
     try {
-        //! Token does not exist
         if (!token) {
-            const error = new Error("Invalid Token Parameters");
+            const error = new Error('Invalid Token Parameters');
             error.statusCode = 404;
             throw error;
         }
 
-        //^ Get data form the redis database
         const userData = await getData('root', token, 'resetPassword');
 
-        //! User does not exist in the redis db or the user token got expired after few minutes 
         if (!userData) {
-            const error = new Error("Token Expired or does not exist");
+            const error = new Error('Token Expired or does not exist');
             error.statusCode = 404;
             throw error;
         }
 
-        const user = await userModel.findById(userData.userId);
+        const user = await User.findByPk(userData.userId);
 
-        //! User does not exist in the actual database
         if (!user) {
-            const error = new Error("Token Expired or does not exist");
+            const error = new Error('Token Expired or does not exist');
             error.statusCode = 400;
             throw error;
         }
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Token is valid",
-        }
-
-        res.status(200).send(info);
+            message: 'Token is valid'
+        });
 
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
-}
+};
 
 exports.ResetPassword = async (req, res, next) => {
     const { token } = req.params;
     try {
-
-        //! Token does not exist
         if (!token) {
-            const error = new Error("Invalid Token Parameters");
+            const error = new Error('Invalid Token Parameters');
             error.statusCode = 404;
             throw error;
         }
 
-        //^ Get data form the redis database
         const userData = await getData('root', token, 'resetPassword');
 
-        //! User does not exist in the redis db or the user token got expired after few minutes 
         if (!userData) {
-            const error = new Error("Token Expired or does not exist");
+            const error = new Error('Token Expired or does not exist');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Getting Data from the form body
         const { password, confirmPassword } = req.body;
 
         if (!password || !confirmPassword) {
-            const error = new Error("Password Parameter Missing");
+            const error = new Error('Password Parameter Missing');
             error.statusCode = 405;
             throw error;
         }
 
         if (password !== confirmPassword) {
-            const error = new Error("Password and Confirm Password does not match");
+            const error = new Error('Password and Confirm Password does not match');
             error.statusCode = 405;
             throw error;
         }
 
-        //^ Checking if the user exists in the mongodb database
-        const user = await userModel.findById(userData.userId);
+        const user = await User.findByPk(userData.userId);
 
-        //! If User does not exist 
-        if (!user || userData.userId !== user.id) {
-
-            //* Deleting the token from the redis database
+        if (!user || userData.userId.toString() !== user.id.toString()) {
             await deleteData('root', token, 'resetPassword');
-
-            const error = new Error("You are not verified, you may need to re-try");
+            const error = new Error('You are not verified, you may need to re-try');
             error.statusCode = 403;
             throw error;
         }
 
-        //* Updating the user's verification status
         user.password = password;
         await user.save();
 
-        //* Deleting the token from the redis database
         await deleteData('root', token, 'resetPassword');
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Password Changed successfully",
-        }
-
-        res.status(200).send(info);
+            message: 'Password Changed successfully'
+        });
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
-}
+};
 
 exports.verifyUser = async (req, res, next) => {
     const { token } = req.params;
     try {
-
-        //! Token does not exist
         if (!token) {
-            const error = new Error("Invalid Token Parameters");
+            const error = new Error('Invalid Token Parameters');
             error.statusCode = 404;
             throw error;
         }
 
-        //^ Get data form the redis database
         const userData = await getData('root', token, 'verifyUser');
 
-        //! User does not exist in the redis db or the user token got expired after few minutes 
         if (!userData) {
-            const error = new Error("Token Expired or does not exist");
+            const error = new Error('Token Expired or does not exist');
             error.statusCode = 404;
             throw error;
         }
 
-        //* Getting Data from the form body
         const { isUserVerified } = req.body;
 
+        const user = await User.findByPk(userData.userId);
 
-        //^ Checking if the user exists in the mongodb database
-        const user = await userModel.findById(userData.userId);
-
-        //! If User does not exist 
-        if (!user || !isUserVerified || userData.userId !== user.id) {
-
-            //* Deleting the token from the redis database
+        if (!user || !isUserVerified || userData.userId.toString() !== user.id.toString()) {
             await deleteData('root', token, 'verifyUser');
-
-            const error = new Error("You are not verified, you may need to re-try");
+            const error = new Error('You are not verified, you may need to re-try');
             error.statusCode = 403;
             throw error;
         }
 
-        //* Updating the user's verification status
         user.isUserVerified = true;
         await user.save();
 
-        //* Deleting the token from the redis database
         await deleteData('root', token, 'verifyUser');
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "User Verification completed!",
-        }
-
-        res.status(200).send(info);
+            message: 'User Verification completed!'
+        });
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
-}
+};
 
 exports.uploadProfileImage = async (req, res, next) => {
     try {
-
         if (!req.files) {
-            const error = new Error("Invalid Images to upload.");
+            const error = new Error('Invalid Images to upload.');
             error.statusCode = 400;
             throw error;
         }
 
         let image;
-        if (req.body.type === "avatar") {
+        if (req.body.type === 'avatar') {
             image = req.files.avatar;
         } else {
-            const error = new Error("Invalid File Upload.");
+            const error = new Error('Invalid File Upload.');
             error.statusCode = 400;
             throw error;
         }
 
         const upload = await uploadImage(image, {
             folder: `PlantSeller/user/${req.user}/profile`,
-            tags: req.body.type,
+            tags: req.body.type
         });
 
-        const { public_id, secure_url } = upload;
+        const uploaded = {
+            public_id: upload.public_id,
+            url: upload.secure_url
+        };
 
-        image = {
-            public_id,
-            url: secure_url
-        }
+        const user = await User.findByPk(req.user);
 
-        const result = await userModel.findOneAndUpdate({ _id: req.user }, {
-            $set: {
-                avatar: image
-            },
-            $push: {
-                avatarList: image
-            }
-        }, {
-            new: true
-        });
-
-        if (!result) {
-            const error = new Error("Failed to update image.");
+        if (!user) {
+            const error = new Error('Failed to update image.');
             error.statusCode = 400;
             throw error;
         }
 
-        const info = {
-            status: true,
-            message: "Image updated successfully.",
-            result
-        };
+        user.avatar_public_id = uploaded.public_id;
+        user.avatar_url = uploaded.url;
+        user.avatarList = [...(user.avatarList || []), uploaded];
 
-        res.status(200).send(info);
+        await user.save();
+
+        res.status(200).send({
+            status: true,
+            message: 'Image updated successfully.',
+            result: toLegacyUser(user)
+        });
     } catch (error) {
         next(error);
     }
@@ -404,57 +360,47 @@ exports.ChangePassword = async (req, res, next) => {
     try {
         const userId = req.user;
 
-        //! User ID does not exist
         if (!userId) {
-            const error = new Error("Unauthorized access");
+            const error = new Error('Unauthorized access');
             error.statusCode = 403;
             throw error;
         }
-        //* Fetch user from the database
-        const user = await userModel.findById(userId);
 
-        //! If user does not exist
+        const user = await User.findByPk(userId);
+
         if (!user) {
-            const error = new Error("Invalid User");
+            const error = new Error('Invalid User');
             error.statusCode = 401;
             throw error;
         }
 
-                //* Extracting passwords from the request body
-        let { previousPassword, password } = req.body;
+        const { previousPassword, password } = req.body;
 
-        //* Verify the previous password matches
-        const isMatch = await bcryptjs.compare(previousPassword, user.password); // Assuming `comparePassword` is defined in your user schema
+        const isMatch = await bcryptjs.compare(previousPassword, user.password);
         if (!isMatch) {
-            const error = new Error("Previous password is incorrect");
+            const error = new Error('Previous password is incorrect');
             error.statusCode = 403;
             throw error;
         }
 
-        //* Update user's password
         user.password = password;
         await user.save();
 
-        //* Respond to the client
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Password updated successfully",
-        };
-
-        res.status(200).send(info);
+            message: 'Password updated successfully'
+        });
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
 };
 
 exports.EnableDisableTwoFactorAuthentication = async (req, res, next) => {
     try {
-        //* Getting user from the request object (assuming authentication middleware adds user info to `req.user`)
         const userId = req.user;
 
-        //! User ID does not exist
         if (!userId) {
-            const error = new Error("Unauthorized access");
+            const error = new Error('Unauthorized access');
             error.statusCode = 403;
             throw error;
         }
@@ -462,37 +408,26 @@ exports.EnableDisableTwoFactorAuthentication = async (req, res, next) => {
         const { isTwoFactorAuthEnabled } = req.body;
 
         if (isTwoFactorAuthEnabled === undefined || isTwoFactorAuthEnabled === null) {
-            const error = new Error("Two Factor Authentication Parameter is required");
+            const error = new Error('Two Factor Authentication Parameter is required');
             error.statusCode = 400;
             throw error;
         }
 
-        //* Fetch user from the database
-        const user = await userModel.findOneAndUpdate({ _id: userId }, {
-            $set: {
-                isTwoFactorAuthEnabled
-            }
-        }, {
-            new: true
-        }).select({ password: 0, tokens: 0, __v: 0 });
+        await User.update({ isTwoFactorAuthEnabled }, { where: { id: userId } });
+        const user = await User.findByPk(userId);
 
-        //! If user does not exist
         if (!user) {
-            const error = new Error("User not found");
+            const error = new Error('User not found');
             error.statusCode = 404;
             throw error;
         }
 
-
-        //* Respond to the client
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Two Factor Authentication status updated successfully",
-            result: user
-        };
-
-        res.status(200).send(info);
+            message: 'Two Factor Authentication status updated successfully',
+            result: toLegacyUser(user)
+        });
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
-}
+};

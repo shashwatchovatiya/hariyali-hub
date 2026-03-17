@@ -1,18 +1,45 @@
-const plantsModel = require('../model/nurseryModel/plants');
+const { Op } = require('sequelize');
+const Plant = require('../model/nurseryModel/plants');
+const Nursery = require('../model/nurseryModel/nursery');
+
+const includeNursery = {
+    model: Nursery,
+    as: 'nursery',
+    attributes: ['id', 'nurseryName']
+};
+
+const toLegacyPlant = (plantInstance) => {
+    const plant = plantInstance.toJSON ? plantInstance.toJSON() : plantInstance;
+
+    return {
+        _id: plant.id,
+        user: plant.user_id,
+        nursery: plant.nursery ? {
+            _id: plant.nursery.id,
+            nurseryName: plant.nursery.nurseryName
+        } : plant.nursery_id,
+        plantName: plant.plantName,
+        price: Number(plant.price),
+        discount: Number(plant.discount),
+        stock: plant.stock,
+        category: plant.category,
+        description: plant.description,
+        images: plant.images || [],
+        imagesList: plant.imagesList || [],
+        noOfVisit: plant.noOfVisit,
+        postedAt: plant.postedAt
+    };
+};
 
 exports.getAllPlants = async (req, res, next) => {
     try {
-        const result = await plantsModel.find().populate({
-            path: "nursery",
-            select: "nurseryName _id"  // Select only the fields you need
-        }).select("-user"); // Populate nursery details
+        const result = await Plant.findAll({ include: [includeNursery] });
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Data of all products",
-            result
-        };
-        res.status(200).send(info);
+            message: 'Data of all products',
+            result: result.map(toLegacyPlant)
+        });
     } catch (error) {
         next(error);
     }
@@ -20,21 +47,21 @@ exports.getAllPlants = async (req, res, next) => {
 
 exports.getPlantById = async (req, res, next) => {
     try {
-        const _id = req.params.id;
-        const result = await plantsModel.findOne({ _id }).populate({
-            path: "nursery",
-            select: "nurseryName _id"  // Select only the fields you need
-        }).select("-user"); // Populate nursery details
+        const result = await Plant.findByPk(req.params.id, { include: [includeNursery] });
 
-        // Assuming there's a method increaseVisit() defined in the plant model
+        if (!result) {
+            const error = new Error('No Product Found');
+            error.statusCode = 404;
+            throw error;
+        }
+
         await result.increaseVisit();
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Data of Product",
-            result
-        };
-        res.status(200).send(info);
+            message: 'Data of Product',
+            result: toLegacyPlant(result)
+        });
     } catch (error) {
         next(error);
     }
@@ -44,39 +71,28 @@ exports.getPlantsByCategory = async (req, res, next) => {
     try {
         const category = req.params.id;
 
-        if(!category) {
-            const error = new Error("Category is required");
+        if (!category) {
+            const error = new Error('Category is required');
             error.statusCode = 400;
             throw error;
         }
 
-        // Construct a MongoDB query to match keywords in various fields
-        const query = {
-            $or: [
-                { category: { $regex: category.split(",").join('|'), $options: 'i' } }, // Match in category
-            ],
-        };
+        const where = {};
 
-        // Handle multiple categories if provided
-        if (category && category.toLowerCase() !== 'all') {
-            const categoryList = category.split(',').map(cat => cat.trim());
-            query.$and = [
-                { category: { $in: categoryList.map(cat => new RegExp(cat, 'i')) } }, // Match categories in a case-insensitive manner
-            ];
+        if (category.toLowerCase() !== 'all') {
+            const categoryList = category.split(',').map((cat) => cat.trim()).filter(Boolean);
+            where[Op.or] = categoryList.map((cat) => ({
+                category: { [Op.like]: `%${cat}%` }
+            }));
         }
 
-        const result = await plantsModel.find(query).populate({
-            path: "nursery",
-            select: "nurseryName _id"  // Select only the fields you need
-        }).select("-user"); // Populate nursery details
+        const result = await Plant.findAll({ where, include: [includeNursery] });
 
-        const info = {
+        res.status(200).send({
             status: true,
             message: `Data For ${category}`,
-            result
-        };
-
-        res.status(200).send(info);
+            result: result.map(toLegacyPlant)
+        });
     } catch (error) {
         next(error);
     }
@@ -92,42 +108,32 @@ exports.searchProducts = async (req, res, next) => {
             throw error;
         }
 
-        // Split the search string into keywords
-        const keywords = search.trim().split(/\s+/);
+        const keywords = search.trim().split(/\s+/).filter(Boolean);
+        const numericKeywords = keywords.map((keyword) => Number(keyword)).filter((value) => !Number.isNaN(value));
 
-        // Construct a MongoDB query to match keywords in various fields
-        const query = {
-            $or: [
-                { plantName: { $regex: keywords.join('|'), $options: 'i' } }, // Match any keyword in title
-                { description: { $regex: keywords.join('|'), $options: 'i' } }, // Match in description
-                { category: { $regex: keywords.join('|'), $options: 'i' } }, // Match in category
-                { price: { $in: keywords.map(k => !isNaN(k) ? parseFloat(k) : null).filter(k => k !== null) } }, // Match numeric keywords with price
-            ],
+        const where = {
+            [Op.or]: [
+                ...keywords.map((keyword) => ({ plantName: { [Op.like]: `%${keyword}%` } })),
+                ...keywords.map((keyword) => ({ description: { [Op.like]: `%${keyword}%` } })),
+                ...keywords.map((keyword) => ({ category: { [Op.like]: `%${keyword}%` } })),
+                ...(numericKeywords.length > 0 ? [{ price: { [Op.in]: numericKeywords } }] : [])
+            ]
         };
 
-        // Handle multiple categories if provided
         if (category && category.toLowerCase() !== 'all') {
-            const categoryList = category.split(',').map(cat => cat.trim());
-            query.$and = [
-                { category: { $in: categoryList.map(cat => new RegExp(cat, 'i')) } }, // Match categories in a case-insensitive manner
-            ];
+            const categoryList = category.split(',').map((cat) => cat.trim()).filter(Boolean);
+            where[Op.and] = [{
+                [Op.or]: categoryList.map((cat) => ({ category: { [Op.like]: `%${cat}%` } }))
+            }];
         }
 
-        // Execute the query and fetch matching products
-        const products = await plantsModel.find(query).populate({
-            path: "nursery",
-            select: "nurseryName _id"  // Select only the fields you need
-        }).select("-user"); // Populate nursery details;
+        const products = await Plant.findAll({ where, include: [includeNursery] });
 
-        // Create a response object
-        const info = {
+        res.status(200).json({
             status: true,
-            message: products.length ? "Search results found" : "No matching results found",
-            result: products,
-        };
-
-        // Send the response
-        res.status(200).json(info);
+            message: products.length ? 'Search results found' : 'No matching results found',
+            result: products.map(toLegacyPlant)
+        });
 
     } catch (error) {
         next(error);

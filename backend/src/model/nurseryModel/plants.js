@@ -1,107 +1,72 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database/db');
 
-const plantsSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.ObjectId,
-        ref: "user",
-        required: [true, "User Id is required."],
-        immutable: true
+const Plant = sequelize.define('plant', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
     },
-    nursery: {
-        type: mongoose.Schema.ObjectId,
-        ref: "nursery",
-        required: [true, "Nursery Id is required."],
-        immutable: true
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    nursery_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
     plantName: {
-        type: String,
-        required: [true, "Plant Name is required."]
+        type: DataTypes.STRING(200),
+        allowNull: false
     },
     price: {
-        type: Number,
-        required: [true, "Price is required."],
-        validator(value) {
-            if (value < 0) {
-                throw new Error("Price should not be negative");
-            }
-        }
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
     },
     discount: {
-        type: Number,
-        required: [true, "Discount is required."],
-        validator(value) {
-            if (value < 0 && value > 100) {
-                throw new Error("Discount must be greater then 0 and smaller then 100");
-            }
-        }
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false
     },
     stock: {
-        type: Number,
-        required: [true, "Stock is required."],
-        validator(value) {
-            if (value < 0) {
-                throw new Error("Stock should not be negative")
-            }
-        }
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
     category: {
-        type: String,
-        required: [true, "Category is required."]
+        type: DataTypes.STRING(100),
+        allowNull: false
     },
     description: {
-        type: String,
-        required: [true, "Description is required."]
+        type: DataTypes.TEXT,
+        allowNull: false
     },
-    images: [
-        {
-            public_id: {
-                type: String,
-                required: [true, "Image public id is required."]
-            },
-            url: {
-                type: String,
-                required: [true, "Image public url is required."]
-            },
-        }
-    ],
-    imagesList: [
-        {
-            public_id: {
-                type: String,
-                required: [true, "Image public id is required."]
-            },
-            url: {
-                type: String,
-                required: [true, "Image public url is required."]
-            },
-        }
-    ],
+    images: {
+        type: DataTypes.JSON,
+        defaultValue: []
+    },
+    imagesList: {
+        type: DataTypes.JSON,
+        defaultValue: []
+    },
     noOfVisit: {
-        type: Number,
-        required: [true, "Number of visit is required."],
-        validator(value) {
-            if (value < 0) {
-                throw new Error("noOfVisit should not be negative")
-            }
-        },
-        default: 0
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     postedAt: {
-        type: Date,
-        default: Date.now,
-        required: [true, "Plant added at is required."]
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
     }
+}, {
+    tableName: 'plants',
+    timestamps: false
 });
 
-plantsSchema.methods.increaseVisit = async function () {
+Plant.prototype.increaseVisit = async function () {
     try {
-        this.noOfVisit++;
+        this.noOfVisit = (this.noOfVisit || 0) + 1;
         await this.save();
     } catch (error) {
         console.log(error);
     }
-}
+};
 
-const plant = new mongoose.model('plant', plantsSchema);
-
-module.exports = plant;
+module.exports = Plant;

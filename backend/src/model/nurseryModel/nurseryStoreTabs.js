@@ -1,34 +1,16 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database/db');
 
-const nurseryStoreTabSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.ObjectId,
-        ref: "user",
-        required: [true, "User Id is required."],
-        immutable: true
-    },
-    nursery: {
-        type: mongoose.Schema.ObjectId,
-        ref: "nursery",
-        required: [true, "Nursery Id is required."],
-        immutable: true
-    },
-    tabName: {
-        type: String,
-        required: [true, "Tab Name is required."],
-        unique: [true, "Tab Name is unique"]
-    },
-    status: {
-        type: String,
-        required: [true, "Status is required."],
-        default: "draft"
-    },
-    index: {
-        type: Number,
-        required: [true, "Order of Tabs is required."],
-    },
+const NurseryStoreTab = sequelize.define('nursery_store_tab', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    user_id: { type: DataTypes.INTEGER, allowNull: false },
+    nursery_id: { type: DataTypes.INTEGER, allowNull: false },
+    tabName: { type: DataTypes.STRING(200), allowNull: false },
+    status: { type: DataTypes.STRING(50), defaultValue: 'draft' },
+    index: { type: DataTypes.INTEGER, allowNull: false }
+}, {
+    tableName: 'nursery_store_tabs',
+    timestamps: false
 });
 
-const nurseryStoresTab = new mongoose.model('nurseryStoreTab', nurseryStoreTabSchema);
-
-module.exports = nurseryStoresTab;
+module.exports = NurseryStoreTab;

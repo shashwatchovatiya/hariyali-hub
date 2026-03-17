@@ -1,69 +1,51 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database/db');
 
-const cartSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.ObjectId,
-        ref: "user",
-        required: [true, "userId is required."],
-        immutable: true
+const Cart = sequelize.define('cart', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
     },
-    nursery: {
-        type: mongoose.Schema.ObjectId,
-        ref: "nursery",
-        required: [true, "Nursery Id is required."],
-        immutable: true
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
-    plant: {
-        type: mongoose.Schema.ObjectId,
-        ref: "plant",
-        required: [true, "PlantId is required."],
-        immutable: true
+    nursery_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    plant_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
     quantity: {
-        type: Number,
-        default: 1,
-        require: [true, "Cart quantity is required."],
-        validate(quantity) {
-            if(quantity < 1) throw new Error("Cart should not be less than 1.");
-        }
+        type: DataTypes.INTEGER,
+        defaultValue: 1
     },
-    pricing: {
-        priceWithoutDiscount: {
-            type: Number,
-            required: [true, "priceWithoutDiscount is required."],
-            validate(price) {
-                if(price < 0) throw new Error("Price must be greater than zero.");
-            }
-        },
-        priceAfterDiscount: {
-            type: Number,
-            required: [true, "priceAfterDiscount is required."],
-            validate(price) {
-                if(price < 0) throw new Error("Price must be greater than zero.");
-            }
-        },
-        discount: {
-            type: Number,
-            required: [true, "discount is required."],
-            validate(price) {
-                if(price < 0) throw new Error("Price must be greater than zero.");
-            }
-        },
-        discountPrice: {
-            type: Number,
-            required: [true, "discountPrice is required."],
-            validate(price) {
-                if(price < 0) throw new Error("Price must be greater than zero.");
-            }
-        },
+    priceWithoutDiscount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+    },
+    priceAfterDiscount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+    },
+    discount: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false
+    },
+    discountPrice: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
     },
     addedAt: {
-        type: Date,
-        required: [true, "Cart Added at is required."],
-        default: Date.now
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
     }
+}, {
+    tableName: 'carts',
+    timestamps: false
 });
 
-const cart = new mongoose.model('cart', cartSchema);
-
-module.exports = cart;
+module.exports = Cart;

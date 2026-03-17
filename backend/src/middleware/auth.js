@@ -1,17 +1,13 @@
 // jsonwebtoken to generate secret
 const jwt = require('jsonwebtoken');
 
-// import the model for user 
-const userModel = require('../model/userModel/user');
-const nurseryModel = require('../model/nurseryModel/nursery');
+// import Sequelize models
+const User = require('../model/userModel/user');
+const Nursery = require('../model/nurseryModel/nursery');
 
 
 const auth = async (req, res, next) => {
     try {
-        //? request to the browser for the cookies 
-        //? Remove the cookie based authentication and implemented the Bearer authentication in the headers 
-        // const token = req.cookies.auth;
-
         const authHeader = req.headers['authorization'];
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             const error = new Error("Authentication failed");
@@ -21,39 +17,35 @@ const auth = async (req, res, next) => {
 
         const token = authHeader.split(' ')[1];
 
-        //! if the token is null
-        if (token === null || token === undefined || token === "" || token === "null" || token === "undefined" || token === "") {
+        if (!token || token === 'null' || token === 'undefined') {
             const error = new Error("Authentication failed");
             error.statusCode = 403;
             throw error;
-        };
+        }
 
-        //? verify the jwt token and return the document id 
         console.log(`[AUTH] Token received: ${token.substring(0, 10)}...`);
         const verifyUser = jwt.verify(token, process.env.ACCESS_SECRET_KEY);
         console.log(`[AUTH] Decoded payload:`, verifyUser);
 
-        if(!verifyUser) {
-            console.log(`[AUTH] JWT verification failed (no payload)`);
+        if (!verifyUser) {
             const error = new Error("Authentication failed!");
             error.statusCode = 403;
             throw error;
         }
 
-        //? find the right user from the database 
-        const user = await userModel.findOne({ _id: verifyUser._id }).select({ _id: 1, role: 1, isUserVerified: 1 });
-        console.log(`[AUTH] User lookup result:`, user);
+        // Find user by primary key (id stored in JWT as _id)
+        const user = await User.findOne({
+            where: { id: verifyUser._id },
+            attributes: ['id', 'role', 'isUserVerified']
+        });
+        console.log(`[AUTH] User lookup result:`, user ? user.id : null);
 
-        //! if user not found
         if (!user) {
-            console.log(`[AUTH] User NOT found in database for ID: ${verifyUser._id}`);
             const error = new Error("Authentication failed");
             error.statusCode = 403;
             throw error;
         }
 
-
-        //! if user is not verified
         if (!user.isUserVerified) {
             const error = new Error("Your Account is not verified please login and verify your account");
             error.statusCode = 403;
@@ -61,22 +53,22 @@ const auth = async (req, res, next) => {
         }
 
         req.token = token;
-        req.user = user._id;
+        req.user = user.id;
         req.role = user.role;
 
         if (req.role.includes("seller")) {
-            const nursery = await nurseryModel.findOne({ user: user._id }).select({ _id: 1 });
-            req.nursery = nursery._id;
+            const nursery = await Nursery.findOne({
+                where: { user_id: user.id },
+                attributes: ['id']
+            });
+            req.nursery = nursery ? nursery.id : null;
         }
 
         next();
 
     } catch (error) {
-        next(error); //! Pass the error to the error handling middleware
+        next(error);
     }
-
-}
-
-
+};
 
 module.exports = auth;

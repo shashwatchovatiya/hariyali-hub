@@ -1,22 +1,18 @@
 const addressModel = require('../../model/userModel/address');
-const mongoose = require('mongoose');
 
 //* POST API 
 //* ADD: New Shipping Address
 exports.addAddress = async (req, res, next) => {
     try {
-        //? remove the default shipping address and set new default shipping address
         if (req.body.setAsDefault) {
-            await addressModel.updateMany({ user: req.user, setAsDefault: true }, {
-                $set: {
-                    setAsDefault: false
-                }
+            await addressModel.update({
+                setAsDefault: false
+            }, {
+                where: { user_id: req.user, setAsDefault: true }
             });
         }
 
-        //* Add: New Address
-        const newAddress = new addressModel({ ...req.body, user: req.user });
-        await newAddress.save();
+        const newAddress = await addressModel.create({ ...req.body, user_id: req.user });
 
         const info = {
             status: true,
@@ -34,20 +30,12 @@ exports.addAddress = async (req, res, next) => {
 //* GET: List of addresses
 exports.getAddressList = async (req, res, next) => {
     try {
-        //* get: List of Address
-        const result = await addressModel.find({ user: req.user });
+        const result = await addressModel.findAll({ where: { user_id: req.user } });
 
-        //! address not found
-        if (!result) {
-            const error = new Error("No Address Found.");
-            error.statusCode = 404;
-            throw error;
-        }
-
-        //* sorting the result so that the default address will be at index 0
         result.sort((a, b) => {
             if (a.setAsDefault === true) return -1;
             if (b.setAsDefault === true) return 1;
+            return 0;
         })
 
         const info = {
@@ -66,8 +54,7 @@ exports.getAddressList = async (req, res, next) => {
 //* GET: Address By Id
 exports.getAddressById = async (req, res, next) => {
     try {
-        //* get: address by id
-        const address = await addressModel.findOne({ _id: req.params.id, user: req.user });
+        const address = await addressModel.findOne({ where: { id: req.params.id, user_id: req.user } });
 
         //! address not found
         if (!address) {
@@ -94,17 +81,18 @@ exports.getAddressById = async (req, res, next) => {
 exports.updateAddress = async (req, res, next) => {
     try {
         if (req.body.setAsDefault === true) {
-            await addressModel.updateMany({ user: req.user, setAsDefault: true }, {
-                $set: {
-                    setAsDefault: false
-                }
+            await addressModel.update({
+                setAsDefault: false
+            }, {
+                where: { user_id: req.user, setAsDefault: true }
             });
         }
 
-        //* update: address
-        const result = await addressModel.findByIdAndUpdate({ _id: req.params.id }, req.body, {
-            new: true
+        await addressModel.update(req.body, {
+            where: { id: req.params.id, user_id: req.user }
         });
+
+        const result = await addressModel.findOne({ where: { id: req.params.id, user_id: req.user } });
 
         //! address not found
         if (!result) {
@@ -130,8 +118,11 @@ exports.updateAddress = async (req, res, next) => {
 //* Delete: Address
 exports.deleteAddress = async (req, res, next) => {
     try {
-        //* delete address
-        const result = await addressModel.findByIdAndDelete(req.params.id);
+        const result = await addressModel.findOne({ where: { id: req.params.id, user_id: req.user } });
+
+        if (result) {
+            await result.destroy();
+        }
 
         //! address not found
         if (!result) {
@@ -155,15 +146,7 @@ exports.deleteAddress = async (req, res, next) => {
 //* Get: Default Address
 exports.getDefaultAddress = async (req, res, next) => {
     try {
-        //* Get All address
-        const address = await addressModel.find({ user: req.user });
-
-        //! address not found
-        if (!address) {
-            const error = new Error("Address not found");
-            error.statusCode = 404;
-            throw error;
-        }
+        const address = await addressModel.findAll({ where: { user_id: req.user } });
 
         //* Find default Address
         const defaultAddress = address.find(address => address.setAsDefault === true);

@@ -1,36 +1,18 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database/db');
 
-const nurseryStoreContactSchema = new mongoose.Schema({
-    nursery: {
-        type: mongoose.Schema.ObjectId,
-        ref: "nursery",
-        required: [true, "Nursery Id is required."]
-    },
-    user: {
-        type: mongoose.Schema.ObjectId,
-        ref: "user"
-    },
-    name: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        required: true
-    },
-    message: {
-        type: String,
-        required: true
-    },
-    isMessageViewed: {
-        type: Boolean,
-        required: true,
-        default: false
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
+const NurseryStoreContact = sequelize.define('nursery_store_contact', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    nursery_id: { type: DataTypes.INTEGER, allowNull: false },
+    user_id: { type: DataTypes.INTEGER, allowNull: true },
+    name: { type: DataTypes.STRING(100), allowNull: false },
+    email: { type: DataTypes.STRING(255), allowNull: false },
+    message: { type: DataTypes.TEXT, allowNull: false },
+    isMessageViewed: { type: DataTypes.BOOLEAN, defaultValue: false },
+    createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+    tableName: 'nursery_store_contacts',
+    timestamps: false
 });
 
-module.exports = mongoose.model('nurseryStoreContact', nurseryStoreContactSchema);
+module.exports = NurseryStoreContact;

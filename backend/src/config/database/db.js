@@ -1,38 +1,24 @@
 /** @format */
 
-// const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
 
-// mongoose.set("strictQuery", false);
+const sequelize = new Sequelize(
+    process.env.MYSQL_DATABASE || 'plantdb',
+    process.env.MYSQL_USER || 'root',
+    process.env.MYSQL_PASSWORD || '',
+    {
+        host: process.env.MYSQL_HOST || '127.0.0.1',
+        port: parseInt(process.env.MYSQL_PORT) || 3306,
+        dialect: 'mysql',
+        logging: false,
+        pool: {
+            max: 10,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+        }
+    }
+);
 
-// // console.log(process.env.COLLECTION_NAME);
-// // const DB = `mongodb+srv://${process.env.COLLECTION_NAME}:${process.env.COLLECTION_PASSWORD}@${process.env.COLLECTION_NAME}.cbqsaya.mongodb.net/?retryWrites=true&w=majority`;
-
-// const DB = "mongodb://127.0.0.1:27017/plantdatabash";
-
-// mongoose.connect(DB, {
-//     useNewUrlParser: true,
-
-// }).then(() => {
-//     console.log("connection successful!...");
-// }).catch((err) => {
-//     console.log(`connection failed!.... ${err}`);
-// });
-
-const mongoose = require("mongoose");
-
-mongoose.set("strictQuery", false);
-
-const DB = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/plantdb";
-
-mongoose
-  .connect(DB, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("connection successful!");
-  })
-  .catch((err) => {
-    console.log(`connection failed! ${err}`);
-  });
+module.exports = sequelize;
 

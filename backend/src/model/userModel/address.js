@@ -1,57 +1,51 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database/db');
 
-const validator = require('validator');
-
-const addressSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: [true, "User Id is required"],
-        immutable: true
+const Address = sequelize.define('address', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
     name: {
-        type: String,
-        required: [true, "Person Name in address is required"]
+        type: DataTypes.STRING(100),
+        allowNull: false
     },
     phone: {
-        type: String,
-        required: [true, "Phone number is required"],
-        validate(phone) {
-            if (!validator.isMobilePhone(phone, 'en-IN')) {
-                throw new Error("Invalid Phone");
-            }
-        }
+        type: DataTypes.STRING(20),
+        allowNull: false
     },
     pinCode: {
-        type: String,
-        required: [true, "Pin Code is required"],
-        validate(pinCode) {
-            if (!validator.isPostalCode(pinCode, 'IN')) {
-                throw new Error("Invalid Pin Code");
-            }
-        }
+        type: DataTypes.STRING(10),
+        allowNull: false
     },
     address: {
-        type: String,
-        required: [true, "Address Filed is required"]
+        type: DataTypes.TEXT,
+        allowNull: false
     },
     landmark: {
-        type: String,
+        type: DataTypes.STRING(255),
+        defaultValue: ''
     },
     city: {
-        type: String,
-        required: [true, "City is required"]
+        type: DataTypes.STRING(100),
+        allowNull: false
     },
     state: {
-        type: String,
-        required: [true, "State is required"]
+        type: DataTypes.STRING(100),
+        allowNull: false
     },
     setAsDefault: {
-        type: Boolean,
-        default: false
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     }
+}, {
+    tableName: 'addresses',
+    timestamps: false
 });
 
-const address = new mongoose.model('address', addressSchema);
-
-module.exports = address;
+module.exports = Address;

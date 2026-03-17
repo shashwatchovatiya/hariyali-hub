@@ -1,5 +1,6 @@
 require('dotenv').config();
-require('./src/config/database/db');
+const sequelize = require('./src/config/database/db');
+require('./src/model/index');
 
 const express = require('express');
 const cors = require('cors');
@@ -87,6 +88,14 @@ app.get('*', (req, res) => {
 
 app.use(errorHandlerMiddleware);
 
-app.listen(port, () => {
-    console.log("listening to port 8000");
-})
+sequelize.authenticate()
+    .then(() => sequelize.sync({ alter: true }))
+    .then(() => {
+        app.listen(port, () => {
+            console.log(`listening to port ${port}`);
+        });
+    })
+    .catch((error) => {
+        console.error('Database connection failed:', error);
+        process.exit(1);
+    });

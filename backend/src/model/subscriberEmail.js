@@ -1,21 +1,14 @@
-// models/Contact.js
-const mongoose = require('mongoose');
-const validator = require('validator');
+// models/SubscriberEmail.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database/db');
 
-const subscriberEmail = new mongoose.Schema({
-    email: {
-        type: String,
-        required: true,
-        validate(email) {
-            if (!validator.isEmail(email)) {
-                throw new Error("Invalid Email");
-            }
-        }
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
+const SubscriberEmail = sequelize.define('subscriber_email', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    email: { type: DataTypes.STRING(255), allowNull: false, unique: true },
+    createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+    tableName: 'subscriber_emails',
+    timestamps: false
 });
 
-module.exports = mongoose.model('subscriber_email', subscriberEmail);
+module.exports = SubscriberEmail;

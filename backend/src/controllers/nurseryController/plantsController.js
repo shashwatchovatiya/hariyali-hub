@@ -1,191 +1,193 @@
 const { uploadImages, deleteResourcesByPrefix, deleteFolder } = require('../../utils/uploadImages');
-const plantsModel = require('../../model/nurseryModel/plants');
-const { default: mongoose } = require('mongoose');
+const Plant = require('../../model/nurseryModel/plants');
+
+const toLegacyPlant = (plantInstance) => {
+    if (!plantInstance) return null;
+
+    const plant = plantInstance.toJSON ? plantInstance.toJSON() : plantInstance;
+
+    return {
+        _id: plant.id,
+        user: plant.user_id,
+        nursery: plant.nursery_id,
+        plantName: plant.plantName,
+        price: Number(plant.price),
+        discount: Number(plant.discount),
+        stock: plant.stock,
+        category: plant.category,
+        description: plant.description,
+        images: plant.images || [],
+        imagesList: plant.imagesList || [],
+        noOfVisit: plant.noOfVisit,
+        postedAt: plant.postedAt
+    };
+};
 
 exports.addNewPlant = async (req, res, next) => {
     try {
         const { user, role, nursery, body, files } = req;
 
         if (!nursery || !role.includes('seller')) {
-            const error = new Error("You are not allowed to access this route");
+            const error = new Error('You are not allowed to access this route');
             error.statusCode = 403;
             throw error;
         }
 
-        const images = [files.image_0, files.image_1, files.image_2];
-        
-        const plant = new plantsModel(body);
-
-        const resultImage = await uploadImages(images, {
-            folder: `PlantSeller/user/${user}/nursery/${nursery}/plants/${plant._id}`,
-            width: 550,
-            height: 650,
-            crop: "fit"
+        const plant = await Plant.create({
+            ...body,
+            user_id: user,
+            nursery_id: nursery
         });
 
+        const images = [files?.image_0, files?.image_1, files?.image_2].filter(Boolean);
 
-        plant.images = resultImage.map((elem) => ({
-            public_id: elem.public_id,
-            url: elem.secure_url
-        }));
+        if (images.length > 0) {
+            const resultImage = await uploadImages(images, {
+                folder: `PlantSeller/user/${user}/nursery/${nursery}/plants/${plant.id}`,
+                width: 550,
+                height: 650,
+                crop: 'fit'
+            });
 
-        plant.imagesList = resultImage.map((elem) => ({
-            public_id: elem.public_id,
-            url: elem.url
-        }));
+            plant.images = resultImage.map((elem) => ({
+                public_id: elem.public_id,
+                url: elem.secure_url
+            }));
 
+            plant.imagesList = resultImage.map((elem) => ({
+                public_id: elem.public_id,
+                url: elem.url
+            }));
 
-        await plant.save();
+            await plant.save();
+        }
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "New plant added successfully.",
-        };
-
-        res.status(200).send(info);
+            message: 'New plant added successfully.',
+            result: toLegacyPlant(plant)
+        });
 
     } catch (error) {
-        // Pass error to error handling middleware
         next(error);
     }
 };
-
 
 exports.getAllPlantsOfNursery = async (req, res, next) => {
     try {
         const { user, role, nursery } = req;
 
         if (!nursery || !role.includes('seller')) {
-            const error = new Error("You are not allowed to access this route");
+            const error = new Error('You are not allowed to access this route');
             error.statusCode = 403;
             throw error;
         }
 
-        const result = await plantsModel.find({ user, nursery });
+        const result = await Plant.findAll({ where: { user_id: user, nursery_id: nursery } });
 
-        if (!result) {
-            const error = new Error("No Plants Found.");
-            error.statusCode = 404;
-            throw error;
-        }
-
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Plants Found successfully.",
-            result
-        };
-
-        res.status(200).send(info);
+            message: 'Plants Found successfully.',
+            result: result.map(toLegacyPlant)
+        });
     } catch (error) {
         next(error);
     }
 };
-
 
 exports.getPlantById = async (req, res, next) => {
     try {
         const { user, role, nursery } = req;
 
         if (!nursery || !role.includes('seller')) {
-            const error = new Error("You are not allowed to access this route");
+            const error = new Error('You are not allowed to access this route');
             error.statusCode = 403;
             throw error;
         }
 
-        const _id = req.params.id;
-        const result = await plantsModel.findOne({ user, nursery, _id });
+        const result = await Plant.findOne({ where: { user_id: user, nursery_id: nursery, id: req.params.id } });
 
         if (!result) {
-            const error = new Error("No Plant Found.");
+            const error = new Error('No Plant Found.');
             error.statusCode = 404;
             throw error;
         }
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Plant Found successfully.",
-            result
-        };
-
-        res.status(200).send(info);
+            message: 'Plant Found successfully.',
+            result: toLegacyPlant(result)
+        });
 
     } catch (error) {
         next(error);
     }
 };
-
 
 exports.updatePlantById = async (req, res, next) => {
     try {
         const { user, role, nursery } = req;
 
         if (!nursery || !role.includes('seller')) {
-            const error = new Error("You are not allowed to access this route");
+            const error = new Error('You are not allowed to access this route');
             error.statusCode = 403;
             throw error;
         }
 
-        const _id = req.params.id;
-        const result = await plantsModel.findOneAndUpdate({ user, nursery, _id }, req.body, {
-            new: true
-        });
+        await Plant.update(req.body, { where: { user_id: user, nursery_id: nursery, id: req.params.id } });
+        const result = await Plant.findOne({ where: { user_id: user, nursery_id: nursery, id: req.params.id } });
 
         if (!result) {
-            const error = new Error("No Plant Found.");
+            const error = new Error('No Plant Found.');
             error.statusCode = 404;
             throw error;
         }
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Plant updated successfully.",
-            result
-        };
-
-        res.status(200).send(info);
+            message: 'Plant updated successfully.',
+            result: toLegacyPlant(result)
+        });
 
     } catch (error) {
         next(error);
     }
 };
-
 
 exports.deletePlantById = async (req, res, next) => {
     try {
         const { user, role, nursery } = req;
 
         if (!nursery || !role.includes('seller')) {
-            const error = new Error("You are not allowed to access this route");
+            const error = new Error('You are not allowed to access this route');
             error.statusCode = 403;
             throw error;
         }
 
-        const _id = req.params.id;
-        const result = await plantsModel.findOneAndDelete({ user, nursery, _id });
+        const result = await Plant.findOne({ where: { user_id: user, nursery_id: nursery, id: req.params.id } });
 
         if (!result) {
-            const error = new Error("No Plant Found.");
+            const error = new Error('No Plant Found.');
             error.statusCode = 404;
             throw error;
         }
 
-        await deleteResourcesByPrefix(`PlantSeller/user/${user}/nursery/${nursery}/plants/${_id}`, {
+        await result.destroy();
+
+        await deleteResourcesByPrefix(`PlantSeller/user/${user}/nursery/${nursery}/plants/${req.params.id}`, {
             type: 'upload',
             resource_type: 'image',
             invalidate: true
         });
 
-        await deleteFolder(`PlantSeller/user/${user}/nursery/${nursery}/plants/${_id}`);
+        await deleteFolder(`PlantSeller/user/${user}/nursery/${nursery}/plants/${req.params.id}`);
 
-        const info = {
+        res.status(200).send({
             status: true,
-            message: "Plant deleted successfully.",
-        };
-
-        res.status(200).send(info);
+            message: 'Plant deleted successfully.'
+        });
 
     } catch (error) {
         next(error);
     }
 };
-

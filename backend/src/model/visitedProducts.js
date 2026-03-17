@@ -1,33 +1,15 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database/db');
 
-const visitedProductSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.ObjectId,
-        ref: "user",
-        required: [true, "userId is required"],
-        immutable: true
-    },
-    plant: {
-        type: mongoose.Schema.ObjectId,
-        ref: "plant",
-        required: [true, "PlantId is required"],
-        unique: [true, "Plant Id is already in the database"],
-        immutable: true
-    },
-    count: {
-        type: Number,
-        required: [true, "Count is required."],
-        defaultValue: 0
-    },
-    lastVisitedAt: {
-        type: Date,
-        required: [true, "Last visited at is required."],
-        default: new Date.now,
-        expires: 60 * 60 * 24 * 7
-    }
+const VisitedProduct = sequelize.define('visited_product', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    user_id: { type: DataTypes.INTEGER, allowNull: false },
+    plant_id: { type: DataTypes.INTEGER, allowNull: false },
+    count: { type: DataTypes.INTEGER, defaultValue: 0 },
+    lastVisitedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+    tableName: 'visited_products',
+    timestamps: false
 });
 
-
-const visitedProduct = new mongoose.model('visitedProduct', visitedProductSchema);
-
-module.exports = visitedProduct;
+module.exports = VisitedProduct;

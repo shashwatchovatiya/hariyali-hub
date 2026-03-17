@@ -1,4 +1,5 @@
 const KV = require('../model/kvModel');
+const { Op } = require('sequelize');
 
 async function getData(userId, orderToken, key) {
     try {
@@ -6,7 +7,14 @@ async function getData(userId, orderToken, key) {
         const token = String(orderToken);
         
         console.log(`[KV GET] Searching for: userId=${uId}, token=${token}, key=${key}`);
-        const result = await KV.findOne({ userId: uId, token: token, key });
+        const result = await KV.findOne({
+            where: {
+                userId: uId,
+                token,
+                key,
+                expireAt: { [Op.gt]: new Date() }
+            }
+        });
         
         if (!result) {
             console.log(`[KV GET] Result NOT found`);
@@ -31,11 +39,13 @@ async function setData(userId, token, key, data, expire) {
         
         console.log(`[KV SET] Saving: userId=${uId}, token=${tkn}, key=${key}, expireAt=${expireAt}`);
         
-        await KV.findOneAndUpdate(
-            { userId: uId, token: tkn, key },
-            { data, expireAt },
-            { upsert: true, new: true }
-        );
+        const existing = await KV.findOne({ where: { userId: uId, token: tkn, key } });
+
+        if (existing) {
+            await existing.update({ data, expireAt });
+        } else {
+            await KV.create({ userId: uId, token: tkn, key, data, expireAt });
+        }
         console.log(`[KV SET] Save successful`);
     } catch (error) {
         console.error(`Error setting data in MongoDB KV: ${error.message}`);
@@ -48,7 +58,7 @@ async function deleteData(userId, token, key) {
         const tkn = String(token);
         
         console.log(`[KV DELETE] userId=${uId}, token=${tkn}, key=${key}`);
-        await KV.deleteOne({ userId: uId, token: tkn, key });
+        await KV.destroy({ where: { userId: uId, token: tkn, key } });
     } catch (error) {
         console.error(`Error deleting data from MongoDB KV: ${error.message}`);
     }
