@@ -154,8 +154,8 @@ const PrivacyPolicyPage = () => {
           <h2>Contact Us</h2>
           <p>If you have any questions about this Privacy Policy, You can contact us:</p>
           <ul>
-            <li>Email: <Link to="mailto:piyushraj2340@gmail.com">piyushraj2340@gmail.com</Link></li>
-            <li>Phone: <Link to="tel:+917463980230">+917463980230</Link></li>
+            <li>Email: <Link to="mailto:shashwatchovatiya316@gmail.com">shashwatchovatiya316@gmail.com</Link></li>
+            <li>Phone: <Link to="tel:+918866187676">+918866187676</Link></li>
           </ul>
         </div>
       </section>

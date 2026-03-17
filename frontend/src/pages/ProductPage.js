@@ -31,7 +31,7 @@ const ProductPage = () => {
     <>
       {
         product ?
-          <div className='container mt-3 p-2 bg-light'>
+          <div className='container mt-3 p-2 pt-5 bg-light'>
             <div className="row">
               <ProductImages />
               <ProductInfo />

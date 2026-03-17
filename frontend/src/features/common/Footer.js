@@ -1,9 +1,10 @@
 import { message } from 'antd';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-
+// import logoImg from '../../Asset/Hariyalihublogo2.png';
 const Footer = () => {
-    const logoImg = "https://res.cloudinary.com/dcd6y2awx/image/upload/f_auto,q_auto/v1/PlantSeller/UI%20Images/plant_seller_bg_none";
+    // const logoImg = "https://res.cloudinary.com/dcd6y2awx/image/upload/f_auto,q_auto/v1/PlantSeller/UI%20Images/plant_seller_bg_none";
+    const logoImg = "https://res.cloudinary.com/dsbm1ydcm/image/upload/v1773788230/The_Hariyali_Hub_logo_design_pxuvlv.png";
 
     const [email, setEmail] = useState("");
 
@@ -110,17 +111,17 @@ const Footer = () => {
                                 <div className="d-flex flex-column align-items-start pe-3">
 
                                     <h6 className="text-uppercase fw-bold mb-4">Contact Us</h6>
-                                    <p><i className="far fa-address-card me-3 text-secondary"></i>Aurangabad, Bihar, India.</p>
+                                    <p><i className="far fa-address-card me-3 text-secondary"></i>Sardar Patel Ring Rd, Nikol, Ahmedabad</p>
                                     <p>
-                                        <Link to="mailto:piyushraj2340@gmail.com" className='text-light'>
+                                        <Link to="mailto:shashwatchovatiya316@gmail.com" className='text-light'>
                                             <i className="fas fa-envelope me-3 text-secondary"></i>
-                                            piyushraj2340@gmail.com
+                                            shashwatchovatiya316@gmail.com
                                         </Link>
                                     </p>
                                     <p>
-                                        <Link to="tel:+917463980230" className='text-light'>
+                                        <Link to="tel:+918866187676" className='text-light'>
                                             <i className="fas fa-phone me-3 text-secondary"></i>
-                                            +917463980230
+                                            +918866187676
                                         </Link>
 
                                     </p>
@@ -178,7 +179,7 @@ const Footer = () => {
                 <div className="text-center" style={{ backgroundColor: "rgba(0, 0, 0, 0.025)" }}>
                     <p className='text-left'>
                         <span>&copy; 2021-2024</span>
-                        <Link className="text-reset fw-bold" to="/"> PlantSeller</Link>
+                        <Link className="text-reset fw-bold" to="/"> The Hariyali Hub</Link>
                         <span> All rights reserved.</span>
                     </p>
                 </div>

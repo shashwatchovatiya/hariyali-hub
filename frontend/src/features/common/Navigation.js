@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { message } from 'antd';
 import useUserData from '../../hooks/useUserData';
+// import logoImg from '../../Asset/Hariyalihublogo2.png';
 
 const Navigation = () => {
     const cartLength = useSelector((state) => state.cart.cartLength);
@@ -22,7 +23,8 @@ const Navigation = () => {
     const toggleNavBarRef = useRef(null);
     const dropdownNavBarRef = useRef(null);
 
-    const logoImg = 'https://res.cloudinary.com/dcd6y2awx/image/upload/f_auto,q_auto/v1/PlantSeller/UI%20Images/plant_seller_bg_none';
+    // const logoImg = 'https://res.cloudinary.com/dcd6y2awx/image/upload/f_auto,q_auto/v1/PlantSeller/UI%20Images/plant_seller_bg_none';
+    const logoImg = "https://res.cloudinary.com/dsbm1ydcm/image/upload/v1773788230/The_Hariyali_Hub_logo_design_pxuvlv.png";
 
     useEffect(() => {
         // Close menu when clicking outside of the menu area
@@ -93,7 +95,7 @@ const Navigation = () => {
     };
 
     return (
-        <nav className="navbar navbar-expand-md navbar-dark bg-dark fixed-top w-100">
+        <nav className="navbar navbar-expand-md navbar-dark bg-dark fixed-top w-100 mb-4">
             <div className="container-fluid">
                 <Link className="navbar-brand" to="/"><img src={logoImg} alt="plant seller logo" className='logo-img' /></Link>
                 <button ref={toggleNavBarRef} className="navbar-toggler" type="button" onClick={() => setNavBarToggle(!navBarToggle)} >

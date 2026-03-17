@@ -178,15 +178,15 @@ const HelpPage = () => {
                     </p>
                     <p>
                         <strong>Email:</strong>{" "}
-                        <Link to="mailto:piyushraj2340@gmail.com">piyushraj2340@gmail.com</Link>
+                        <Link to="mailto:shashwatchovatiya316@gmail.com">shashwatchovatiya316@gmail.com</Link>
                     </p>
                     <p>
 
                         <strong>Phone:</strong>
-                        <Link to="tel:+917463980230"> +91 7463980230</Link>
+                        <Link to="tel:+918866187676"> +91 7463980230</Link>
                     </p>
                     <p>
-                        <strong>Address:</strong> Aurangabad, Bihar, India.
+                        <strong>Address:</strong> Sardar Patel Ring Rd, near galaxy business park, Nikol, Ahmedabad
                     </p>
                 </section>
 

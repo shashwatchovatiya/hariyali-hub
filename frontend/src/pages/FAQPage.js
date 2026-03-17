@@ -8,14 +8,14 @@ const FAQPage = () => {
     // Define your FAQs data
     const faqs = [
         {
-            question: '1. What is Plant Seller?',
-            answer: "Plant Seller is an online platform designed to help you discover and purchase plants for your home or garden. We offer a variety of plants from nurseries around the country, with features to help users, nurseries, and admins manage their plant collections, orders, and profiles.",
+            question: '1. What is  The Hariyali Hub?',
+            answer: " The Hariyali Hub is an online platform designed to help you discover and purchase plants for your home or garden. We offer a variety of plants from nurseries around the country, with features to help users, nurseries, and admins manage their plant collections, orders, and profiles.",
         },
         {
-            question: "2. How can I create an account on Plant Seller?",
+            question: "2. How can I create an account on  The Hariyali Hub?",
             answer: (
                 <>
-                    <p>To create an account on Plant Seller:</p>
+                    <p>To create an account on  The Hariyali Hub:</p>
                     <ol>
                         <li>Click on the Sign Up button on the homepage.</li>
                         <li>Provide your email, create a password, and enter any other required details.</li>
@@ -145,16 +145,16 @@ const FAQPage = () => {
                     <p>If you have any questions or need assistance:</p>
                     <ol>
                         <li>Visit the <a href="/contact-us">Contact Us</a> page on the website.</li>
-                        <li>You can send us a message through the contact form or email us directly at <a href="mailto:piyushraj2340@gmail.com">piyushraj2340@gmail.com</a>.</li>
+                        <li>You can send us a message through the contact form or email us directly at <a href="mailto:shashwatchovatiya316@gmail.com">shashwatchovatiya316@gmail.com</a>.</li>
                     </ol>
                 </>
             )
         },
         {
-            question: '13. How can I become an admin on Plant Seller?',
+            question: '13. How can I become an admin on  The Hariyali Hub?',
             answer: (
                 <>
-                    <p>Admins are usually invited by the platform owner. If you're interested in becoming an admin, please contact us at <a href="mailto:piyushraj2340@gmail.com">piyushraj2340@gmail.com   </a>.</p>
+                    <p>Admins are usually invited by the platform owner. If you're interested in becoming an admin, please contact us at <a href="mailto:shashwatchovatiya316@gmail.com">shashwatchovatiya316@gmail.com   </a>.</p>
                     <p>As an admin, you will have access to manage all aspects of the platform, including:</p>
                     <ul>
                         <li>User accounts</li>
@@ -204,15 +204,15 @@ const FAQPage = () => {
             )
         },
         {
-            question: '17. Is there a mobile app available for Plant Seller?',
-            answer: "Currently, Plant Seller is a web-based platform and does not have a dedicated mobile app. However, the website is fully responsive and optimized for use on mobile devices."
+            question: '17. Is there a mobile app available for  The Hariyali Hub?',
+            answer: "Currently,  The Hariyali Hub is a web-based platform and does not have a dedicated mobile app. However, the website is fully responsive and optimized for use on mobile devices."
         },
         {
-            question: '18. Can I subscribe to newsletters from Plant Seller?',
+            question: '18. Can I subscribe to newsletters from  The Hariyali Hub?',
             answer: "Yes, you can subscribe to our newsletter to receive updates on new plants, offers, and more. Simply enter your email in the Subscribe section on the homepage to stay connected."
         },
         {
-            question: '19. Is my personal information safe on Plant Seller?',
+            question: '19. Is my personal information safe on  The Hariyali Hub?',
             answer: "Yes, we take privacy and security seriously. Your personal information is stored securely using industry-standard encryption, and we do not share it with third parties without your consent. For more details, please refer to our Privacy Policy."
         },
         {

@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Rating } from 'react-simple-star-rating';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllProductsAsync, getProductsByCategoryAsync, searchProductsAsync } from '../productsSlice';
-import { transformImageUrl } from '../../../utils/imageUtils';
+import { IMAGE_PLACEHOLDER_URL, transformImageUrl } from '../../../utils/imageUtils';
 
 const Products = () => {
     const products = useSelector((state) => state.products.products);
@@ -18,6 +18,11 @@ const Products = () => {
     const categoryList = category ? category.split(',') : [];
 
     const noPlantsImage = "https://res.cloudinary.com/dcd6y2awx/image/upload/f_auto,q_auto/v1/PlantSeller/UI%20Images/no-data-found";
+
+    const getProductImageUrl = (product) => {
+        const imageUrl = product?.images?.[0]?.url || product?.imagesList?.[0]?.url;
+        return transformImageUrl(imageUrl, 280, 300);
+    }
 
     useEffect(() => {
         if (!searchKeyword && !category) {
@@ -37,7 +42,7 @@ const Products = () => {
             // Case 4: /products/?search='some keyword'&category='some category'
             dispatch(searchProductsAsync({ search: searchKeyword, category }));
         }
-    }, [location.search, dispatch]);
+    }, [location.search, dispatch, searchKeyword, category, categoryList.length]);
 
     const handelSearchProductsByCategory = (category) => {
         if(category === 'all' && categoryList.length === 0 && category === 'all') {
@@ -56,7 +61,7 @@ const Products = () => {
     }
 
     return (
-        <div className="container product-container mb-4 mb-md-5">
+        <div className="container product-container mb-4 mb-md-5 pt-5">
             <div className="p-2">
                 <h1 className='text-center p-2'>Available Plants for Sell</h1>
             </div>
@@ -72,10 +77,19 @@ const Products = () => {
                     products &&
                     products.map((elem) => {
                         return (
-                            <div key={elem._id} className="px-1 d-flex center-text overflow-hidden">
+                            <div key={elem._id} className="px-1 d-flex justify-content-center align-items-center text-center overflow-hidden">
                                 <Link className='text-dark' style={{ textDecoration: "none" }} to={`/product/${elem._id}`}>
                                     <div className="card my-1">
-                                        <img className="img-fluid" src={transformImageUrl(elem.images[0].url)} alt="Card plants" />
+                                        <img
+                                            className="img-thumbnail"
+                                            style={{ height: "330px", objectFit: "cover", width: "280px" }}
+                                            src={getProductImageUrl(elem)}
+                                            onError={(event) => {
+                                                event.currentTarget.onerror = null;
+                                                event.currentTarget.src = IMAGE_PLACEHOLDER_URL;
+                                            }}
+                                            alt="Card plants"
+                                        />
                                         <div className="card-body">
                                             <h4 className="card-title">{elem.plantName}</h4>
                                             <p className="text-muted" style={{ fontSize: "14px", margin: "0" }}>price</p>
