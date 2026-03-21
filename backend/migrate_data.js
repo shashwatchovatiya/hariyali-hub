@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
@@ -6,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // Configure these
 const REMOTE_URI = process.argv[2]; // Pass as argument: node migrate.js "remote_uri"
-const LOCAL_URI = "mongodb://127.0.0.1:27017/plantdb";
+const LOCAL_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/plantdb";
 const UPLOAD_DIR = path.join(__dirname, 'public/uploads');
 
 if (!REMOTE_URI) {

@@ -1,8 +1,9 @@
 
+require('dotenv').config();
 const mongoose = require('mongoose');
 const addressModel = require('d:/Manav-Mitali-Diya-project/Plant-Selling-Website/backend/src/model/userModel/address.js');
 
-const DB = "mongodb://127.0.0.1:27017/plantdb";
+const DB = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/plantdb";
 
 async function run() {
     try {

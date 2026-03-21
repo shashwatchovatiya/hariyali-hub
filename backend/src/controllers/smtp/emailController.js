@@ -93,7 +93,7 @@ exports.getInTouch = async (to, recipientName, userMessage) => {
 
     const youHaveNewContactUsMessageOptions = {
       from: `"Plant Seller" <${smtpConfig.auth.user}>`, // Sender address
-      to: "piyushraj2340@gmail.com", // List of receivers
+      to: "shashwatchovatiya316@gmail.com", // List of receivers
       subject: "New message from PlantSeller", // Subject line
       html: youHaveNewContactUsMessage, // HTML body
     };
@@ -129,7 +129,7 @@ exports.emailSubscriber = async (to) => {
 
     const youHaveNewSubscriberOptions = {
       from: `"Plant Seller" <${smtpConfig.auth.user}>`, // Sender address
-      to: "piyushraj2340@gmail.com", // List of receivers
+      to: "shashwatchovatiya316@gmail.com", // List of receivers
       subject: "New subscriber from PlantSeller", // Subject line
       html: youHaveNewSubscriber, // HTML body
     };

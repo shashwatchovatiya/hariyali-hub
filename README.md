@@ -129,7 +129,7 @@ Contributions are welcome! Please feel free to submit a pull request or open an 
 
 **Contact:**
 
-For any inquiries or support, please contact [Piyush Raj](piyushraj2340@gmail.com).
+For any inquiries or support, please contact [Piyush Raj](shashwatchovatiya316@gmail.com).
 
 ---
 
