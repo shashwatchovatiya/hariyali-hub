@@ -1,0 +1,79 @@
+.nursery-plants-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+
+  .nursery-sidebar {
+    flex: 0 0 250px;
+    background-color: #fff;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  .nursery-plants-content {
+    flex: 1;
+    padding: 30px;
+    background-color: #f5f5f5;
+
+    @media (max-width: 768px) {
+      padding: 15px;
+    }
+
+    .plants-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      h2 {
+        margin: 0;
+        color: #333;
+        font-size: 24px;
+      }
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 15px;
+
+        h2 {
+          width: 100%;
+        }
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+
+    .loading-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 400px;
+    }
+
+    .in-stock {
+      color: #52c41a;
+      font-weight: 500;
+    }
+
+    .out-of-stock {
+      color: #ff4d4f;
+      font-weight: 500;
+    }
+  }
+}
+
+:global(.ant-table) {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}

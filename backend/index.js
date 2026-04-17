@@ -40,6 +40,7 @@ const authRoute = require("./src/router/auth");
 const nurseryRoute = require("./src/router/nurseryRoute/nursery");
 const nurseryStoreRoute = require("./src/router/nurseryRoute/nurseryStore");
 const plantsRoute = require("./src/router/nurseryRoute/plants");
+const sellerOrdersRoute = require("./src/router/nurseryRoute/sellerOrders");
 const products = require("./src/router/products");
 const orderRoute = require("./src/router/checkoutRoute/orders");
 const user = require("./src/router/userRoute/user");
@@ -55,7 +56,7 @@ const subscriberEmail = require("./src/router/subscriberEmail");
 // secured routes 
 app.use('/api/v2/auth', authRoute);
 app.use('/api/v2/user', user, cart, orderRoute, address);
-app.use("/api/v2/nursery", nurseryRoute, nurseryStoreRoute, plantsRoute);
+app.use("/api/v2/nursery", nurseryRoute, nurseryStoreRoute, plantsRoute, sellerOrdersRoute);
 app.use("/api/v2/checkout", payment);
 
 // public routes

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import Payment from './Payment'
@@ -11,6 +11,7 @@ import useUserData from '../../../hooks/useUserData';
 
 
 const Checkout = () => {
+  const hasInitializedCheckout = useRef(false);
   const [clientKey, setClientKey] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [amount, setAmount] = useState(0);
@@ -107,6 +108,11 @@ const Checkout = () => {
 
 
   useEffect(() => {
+    if (hasInitializedCheckout.current) {
+      return;
+    }
+
+    hasInitializedCheckout.current = true;
     handelGetClientKey();
     handelClientSecretKey();
   }, []);

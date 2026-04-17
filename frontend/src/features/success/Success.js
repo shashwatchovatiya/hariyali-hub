@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { updateOrderAfterConfirmPaymentAsync } from '../order/orderSlice';
 
 const Success = () => {
     document.title = "Payment successful";
+    const hasHandledSuccess = useRef(false);
 
     const [payment, client, status] = window.location.search && window.location.search.split("&");
 
@@ -37,6 +38,11 @@ const Success = () => {
     }
 
     useEffect(() => {
+        if (hasHandledSuccess.current) {
+            return;
+        }
+
+        hasHandledSuccess.current = true;
         handelUpdateOrderAfterConfirmPayment();
     }, []);
 

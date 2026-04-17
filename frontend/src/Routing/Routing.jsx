@@ -10,7 +10,11 @@ import SignupPage from "../pages/SignupPage";
 import LogoutPage from "../pages/LogoutPage";
 import ProfilePage from "../pages/ProfilePage";
 import NurseryProfilePage from "../pages/NurseryProfilePage";
-//TODO: ADD NURSERY PUBLIC PROFILE PAGE HERE
+import NurseryDashboard from "../pages/NurseryDashboard";
+import NurseryOrderTracker from "../pages/NurseryOrderTracker";
+import NurseryOrderTrack from "../pages/NurseryOrderTrack";
+import NurseryPlants from "../pages/NurseryPlants";
+import NurseryOrder from "../pages/NurseryOrder";
 import CreateNurseryPage from "../pages/CreateNurseryPage";
 import EditNurseryPage from "../pages/EditNurseryPage";
 import AddNewPlants from "../pages/AddNewPlants";
@@ -64,11 +68,16 @@ const Routing = () => {
             <Route exact path="/account/ResetYourPassword/:token" element={<ResetYourPasswordPage />} />
             <Route exact path="/account/twoFactorAuthentication/:token" element={<TwoFactorAuthenticationPage />} />
             <Route exact path="/nursery" element={<NurseryProfilePage />} />
-            <Route exact path="/nursery/store/view/:id" element={<NurseryPublicStorePage />} /> {/* //TODO: NEED TO IMPLEMENTS THIS */}
+            <Route exact path="/nursery/dashboard" element={<ProtectedRoute><NurseryDashboard /></ProtectedRoute>} />
+            <Route exact path="/nursery/orders/track" element={<ProtectedRoute><NurseryOrderTracker /></ProtectedRoute>} />
+            <Route exact path="/nursery/order/track" element={<ProtectedRoute><NurseryOrderTrack /></ProtectedRoute>} />
+            <Route exact path="/nursery/order" element={<ProtectedRoute><NurseryOrder /></ProtectedRoute>} />
+            <Route exact path="/nursery/plants" element={<ProtectedRoute><NurseryPlants /></ProtectedRoute>} />
+            <Route exact path="/nursery/store/view/:id" element={<NurseryPublicStorePage />} />
             <Route exact path="/nursery/create" element={<CreateNurseryPage />} />
             <Route exact path="/nursery/update" element={<EditNurseryPage />} />
             <Route exact path="/nursery/plant/new" element={<AddNewPlants />} />
-            <Route exact path="/nursery/plant/update/:id" element={<EditPlantsPage />} /> {/* //TODO: NEED TO IMPLEMENTS THIS */}
+            <Route exact path="/nursery/plant/update/:id" element={<EditPlantsPage />} />
             <Route exact path="/address" element={<AddressPage />} />
             <Route exact path="/address/new" element={<AddNewAddressPage />} />
             <Route exact path="/address/update/:id" element={<EditAddressPage />} />

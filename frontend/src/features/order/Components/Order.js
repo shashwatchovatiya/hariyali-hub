@@ -47,11 +47,12 @@ const Order = () => {
 
     const handelChangeOrderPage = (page) => {
         const data = {
-            page: orderPage,
+            page,
             limit: 10,
             endDate: orderFilterByDate,
             orderSearch
         }
+
         window.scrollTo(0, 0);
         setOrderPage(page);
         dispatch(getOrderHistoryAsync(data));
@@ -186,6 +187,8 @@ const Order = () => {
                                         {
                                             order.orderItems.map(items => {
 
+                                                const normalizedStatus = (items.orderStatus?.status || "Pending").toLowerCase();
+
                                                 const stepsOptions = [
                                                     {
                                                         title: order.payment.status === 'pending' ? "Order Pending" : "Order Placed",
@@ -193,22 +196,22 @@ const Order = () => {
                                                         description: <span className='text-muted'>{formatTimestamp(order.orderAt)} <br /> <i className="fw-bold">{order.payment.status === 'pending' && order.payment.message}</i></span>
                                                     },
                                                     {
-                                                        title: 'Order Shipped',
+                                                        title: 'Order In Transit',
                                                         icon: <span className='	fas fa-shipping-fast'></span>,
-                                                        description: items.orderStatus.state === "shipped" && <span className='text-muted'>{formatTimestamp(items.orderStatus.statusAt)} <br /> {items.orderStatus.message}</span>
+                                                        description: (normalizedStatus === "processing" || normalizedStatus === "shipped") && <span className='text-muted'>{formatTimestamp(items.orderStatus.statusAt)} <br /> {items.orderStatus.message}</span>
                                                     },
                                                     {
                                                         title: 'Order Delivered',
                                                         icon: <span className='fas fa-home'></span>,
-                                                        description: items.orderStatus.state === "delivered" && <span className='text-muted'>{formatTimestamp(items.orderStatus.statusAt)} <br /> {items.orderStatus.message}</span>
+                                                        description: normalizedStatus === "completed" && <span className='text-muted'>{formatTimestamp(items.orderStatus.statusAt)} <br /> {items.orderStatus.message}</span>
                                                     },
                                                 ]
 
                                                 let activeStep = 0;
 
-                                                if (items.orderStatus.status === 'delivered') {
+                                                if (normalizedStatus === 'completed') {
                                                     activeStep = 2;
-                                                } else if (items.orderStatus.status === 'shipped') {
+                                                } else if (normalizedStatus === 'processing' || normalizedStatus === 'shipped') {
                                                     activeStep = 1;
                                                 } else {
                                                     activeStep = 0;

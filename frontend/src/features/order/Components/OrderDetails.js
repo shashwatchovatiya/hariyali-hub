@@ -125,6 +125,10 @@ const OrderDetails = () => {
                                                             <div className="flex-fill ms-2 p-2">
                                                                 <h5 className="bold"><Link to={`/product/${orderItems.plant}`} className='link-dark link-underline-hover'>{orderItems.plantName}</Link></h5>
                                                                 <p className="text-muted m-0"> Qt: {orderItems.quantity} {orderItems.quantity > 1 ? "items" : "item"}</p>
+                                                                <p className='text-muted m-0'>Status: <span className='fw-bold'>{orderItems.orderStatus?.status || 'Pending'}</span></p>
+                                                                {orderItems.orderStatus?.statusAt && (
+                                                                    <p className='text-muted m-0'>Last update: <span className='fw-bold'>{formatTimestamp(orderItems.orderStatus.statusAt)}</span></p>
+                                                                )}
                                                                 <div className="text-muted" style={{ fontSize: "14px", margin: "0" }}>
                                                                     Price : <small className='text-decoration-line-through'>₹ {orderItems.price}</small>
                                                                 </div>
